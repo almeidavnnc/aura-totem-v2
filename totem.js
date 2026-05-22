@@ -227,7 +227,7 @@ function rotulo(g, x, y, txt, cls = "label") {
 function renderPrincipalFrontal() {
   const T = PRINCIPAL;
   const larguraDesenho = T.base.lado; // 400
-  const g = novoSvg("p-frontal", larguraDesenho, T.altura, 30, 70, 70);
+  const g = novoSvg("p-frontal", larguraDesenho, T.altura, 55, 70, 70);
   if (!g) return;
   const altoT = T.altura;
   const centroX = larguraDesenho / 2;
@@ -338,7 +338,7 @@ function renderPrincipalFrontal() {
 function renderPrincipalLateral() {
   const T = PRINCIPAL;
   const larguraDesenho = T.cabeca.profundidade + 20;
-  const g = novoSvg("p-lateral", larguraDesenho, T.altura, 30, 50, 50);
+  const g = novoSvg("p-lateral", larguraDesenho, T.altura, 55, 50, 50);
   if (!g) return;
   const altoT = T.altura;
   const cx = larguraDesenho / 2;
@@ -452,7 +452,7 @@ function renderPrincipalSuperior() {
 function renderImpressoraFrontal() {
   const T = IMPRESSORA;
   const w = T.caixa.largura + 60;
-  const g = novoSvg("i-frontal", w, T.altura, 30, 60, 60);
+  const g = novoSvg("i-frontal", w, T.altura, 55, 60, 60);
   if (!g) return;
   const cx = w / 2;
   const altoT = T.altura;
@@ -536,7 +536,7 @@ function renderImpressoraFrontal() {
 function renderImpressoraLateral() {
   const T = IMPRESSORA;
   const w = T.caixa.profundidade + 40;
-  const g = novoSvg("i-lateral", w, T.altura, 30, 40, 40);
+  const g = novoSvg("i-lateral", w, T.altura, 55, 40, 40);
   if (!g) return;
   const cx = w / 2;
   const altoT = T.altura;
