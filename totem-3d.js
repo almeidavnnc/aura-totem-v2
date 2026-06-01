@@ -257,7 +257,7 @@ function buildPrincipal() {
   pieces.push(ledCol); leds.push(ledCol);
   group.add(ledCol); colunaItems.push(ledCol);
 
-  /* === CABEÇA stadium 320×550×180 === */
+  /* === CABEÇA stadium 340×600×180 === */
   const cabY = T.cabeca.y_inicio + T.cabeca.altura / 2;
   const cabFront = T.cabeca.profundidade / 2;  // +90
 
@@ -336,7 +336,7 @@ function buildPrincipal() {
     emissiveMat(COLORS.led, 1.2)
   );
   ledRing.position.set(0, cabY, cabFront + 0.5);
-  ledRing.userData = { cod: 'LED-Cab', nome: 'LED perimetral da cabeça', mat: 'Fita LED COB 24V 3000K', obs: 'A 18 mm da borda, ~1053 mm de perímetro' };
+  ledRing.userData = { cod: 'LED-Cab', nome: 'LED perimetral da cabeça', mat: 'Fita LED COB 24V 3000K', obs: 'A 18 mm da borda, ~1444 mm de perímetro' };
   pieces.push(ledRing); leds.push(ledRing);
   group.add(ledRing); cabecaItems.push(ledRing);
 
@@ -347,7 +347,7 @@ function buildPrincipal() {
   ledMask.position.set(0, cabY, cabFront + 1.0);
   group.add(ledMask); cabecaItems.push(ledMask);
 
-  // Monitor
+  // Monitor — tela visível (área ativa), deslocada p/ cima pela regulagem
   const mon = new THREE.Mesh(
     new THREE.PlaneGeometry(T.monitor.rec_l, T.monitor.rec_a),
     new THREE.MeshStandardMaterial({
@@ -355,8 +355,8 @@ function buildPrincipal() {
       roughness: 0.2, metalness: 0.05
     })
   );
-  mon.position.set(0, T.monitor.cy, cabFront + 1.5);
-  mon.userData = { cod: 'MON', nome: 'Monitor Touch 15.6"', mat: 'LCD vertical', l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Recuo 3 mm + rebaixo 4 mm na moldura' };
+  mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront + 1.5);
+  mon.userData = { cod: 'MON', nome: 'Monitor Touch 15.6" (em pé)', mat: 'Tela visível ' + T.monitor.rec_l + '×' + T.monitor.rec_a, l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Moldura ' + T.monitor.moldura_l + '×' + T.monitor.moldura_a + ' mm · recuo 3 mm + rebaixo 4 mm · recorte deslocado ' + T.monitor.offset_y + ' mm p/ cima (borda inferior mais grossa)' };
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
 
@@ -387,8 +387,8 @@ function buildPrincipal() {
   pieces.push(lente);
   group.add(lente); cabecaItems.push(lente);
 
-  /* === TUBOS T1 (2× 20×20×1600) === */
-  const t1Len = window.ESTRUTURA?.tubos_principal?.comprimento ?? 1600;
+  /* === TUBOS T1 (2× 20×20×1650) === */
+  const t1Len = window.ESTRUTURA?.tubos_principal?.comprimento ?? 1650;
   for (let i = 0; i < 2; i++) {
     const t = piece(new THREE.BoxGeometry(20, t1Len, 20), tuboMat, pcInfo('T1'));
     t.position.set(i === 0 ? -16 : 16, t1Len / 2, 0);

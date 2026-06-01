@@ -4,7 +4,7 @@
    ============================================================ */
 
 const PRINCIPAL = {
-  altura: 1600,
+  altura: 1650,
 
   base: {
     formato: "quadrada",
@@ -28,12 +28,12 @@ const PRINCIPAL = {
   },
 
   cabeca: {
-    largura: 320,
-    altura: 550,
+    largura: 340,
+    altura: 600,
     profundidade: 180,
-    raio: 160,
+    raio: 170,
     y_inicio: 1050,
-    y_fim: 1600,
+    y_fim: 1650,
     moldura: 20,
     led_canal: { largura: 10, prof: 8, offset_borda: 18 }
   },
@@ -44,22 +44,33 @@ const PRINCIPAL = {
     furo: 68,
     aro: 95,
     aro_prof: 8,
-    cy: 1520,
-    cx: 160,
+    cy: 1570,
+    cx: 170,
     espaco: { l: 150, a: 100, p: 90 }
   },
 
   monitor: {
-    rec_l: 180,
-    rec_a: 315,
+    modelo: "15.6\" touchscreen",
+    // Moldura física do monitor montado EM PÉ (retrato): 22 cm × 36 cm
+    moldura_l: 220,
+    moldura_a: 360,
+    // Área ativa visível (a tela que acende) — 15.6" 16:9 girado p/ retrato
+    rec_l: 194,
+    rec_a: 345,
+    // REGULAGEM: a borda inferior do monitor é mais grossa que a superior
+    // (o monitor não é um retângulo simétrico). Este valor (mm) desloca o
+    // RECORTE da tela visível para CIMA em relação ao centro da moldura,
+    // para mostrar só a área ativa. Ajustar testando com o monitor real:
+    // aumentar se a borda de baixo for mais grossa.
+    offset_y: 6,
     rebaixo: 4,
     recuo: 3,
-    cy: 1280,
-    cx: 160,
+    cy: 1305,   // centro Y da MOLDURA do monitor (altura a partir do chão)
+    cx: 170,
     inclinacao: 0
   },
 
-  mini_pc: { l: 130, p: 130, a: 50, cy: 1280 }
+  mini_pc: { l: 130, p: 130, a: 50, cy: 1305 }
 };
 
 const IMPRESSORA = {
@@ -99,7 +110,7 @@ const IMPRESSORA = {
 
 const ESTRUTURA = {
   tubo_secao: 20,
-  tubos_principal: { qtd: 2, comprimento: 1600 },
+  tubos_principal: { qtd: 2, comprimento: 1650 },
   tubos_impressora: { qtd: 2, comprimento: 850 }
 };
 
@@ -302,37 +313,42 @@ function renderPrincipalFrontal() {
     fill: "#444", stroke: "none"
   }));
 
-  // Monitor (tela com rebaixo)
-  const monX = centroX - T.monitor.rec_l / 2;
-  const monY = altoT - T.monitor.cy - T.monitor.rec_a / 2;
-  // Rebaixo (área externa + 10mm)
+  // Monitor montado em pé (retrato)
+  const M = T.monitor;
+  // Moldura física do monitor (rebaixo onde o monitor encaixa) — tracejada
+  const molX = centroX - M.moldura_l / 2;
+  const molY = altoT - M.cy - M.moldura_a / 2;
   g.appendChild(el("rect", {
-    x: px(monX - 5), y: px(monY - 5),
-    width: px(T.monitor.rec_l + 10), height: px(T.monitor.rec_a + 10),
+    x: px(molX), y: px(molY),
+    width: px(M.moldura_l), height: px(M.moldura_a),
     fill: "none", stroke: "#9e8a6f", "stroke-width": 0.6, "stroke-dasharray": "2 2"
   }));
+  // Recorte da tela visível (área ativa) — deslocado p/ cima pela regulagem (offset_y)
+  const recCy = M.cy + M.offset_y;
+  const monX = centroX - M.rec_l / 2;
+  const monY = altoT - recCy - M.rec_a / 2;
   g.appendChild(el("rect", {
     x: px(monX), y: px(monY),
-    width: px(T.monitor.rec_l), height: px(T.monitor.rec_a),
+    width: px(M.rec_l), height: px(M.rec_a),
     class: "tela"
   }));
 
   if (config.rotulos) {
     rotulo(g, centroX + T.camera.aro / 2 + 6, camCy + 3, "⌀68 lente / ⌀95 aro", "label-small");
-    rotulo(g, monX + 6, monY + 14, "Monitor 15.6\"", "label-small");
+    rotulo(g, monX + 6, monY + 14, "Tela 15.6\"", "label-small");
   }
 
   // === COTAS ===
   cotaH(g, centroX - T.base.lado / 2, centroX + T.base.lado / 2, altoT + 8, "400", { dir: -1, offset: 20 });
   cotaH(g, colX, colX + T.coluna.largura, altoT - T.coluna.y_inicio + 10, "120", { dir: -1, offset: 20 });
-  cotaH(g, centroX - T.cabeca.largura / 2, centroX + T.cabeca.largura / 2, altoT - T.cabeca.y_fim - 10, "320");
+  cotaH(g, centroX - T.cabeca.largura / 2, centroX + T.cabeca.largura / 2, altoT - T.cabeca.y_fim - 10, String(T.cabeca.largura));
 
-  cotaV(g, altoT, 0, larguraDesenho, "1600", { offset: 30 });
+  cotaV(g, altoT, 0, larguraDesenho, String(T.altura), { offset: 30 });
   cotaV(g, altoT, altoT - T.base.altura, 0, "60", { dir: -1, offset: 25 });
   cotaV(g, altoT - T.coluna.y_inicio, altoT - T.coluna.y_fim, 0, "990", { dir: -1, offset: 25 });
-  cotaV(g, altoT - T.cabeca.y_inicio, altoT - T.cabeca.y_fim, larguraDesenho, "550", { offset: 30 });
-  cotaV(g, altoT, altoT - T.camera.cy, larguraDesenho, "1520", { offset: 55 });
-  cotaV(g, altoT, altoT - T.monitor.cy, larguraDesenho, "1280", { offset: 80 });
+  cotaV(g, altoT - T.cabeca.y_inicio, altoT - T.cabeca.y_fim, larguraDesenho, String(T.cabeca.altura), { offset: 30 });
+  cotaV(g, altoT, altoT - T.camera.cy, larguraDesenho, String(T.camera.cy), { offset: 55 });
+  cotaV(g, altoT, altoT - recCy, larguraDesenho, String(recCy), { offset: 80 });
 }
 
 function renderPrincipalLateral() {
@@ -375,8 +391,8 @@ function renderPrincipalLateral() {
   if (config.internos) {
     // Monitor (próximo da frente)
     g.appendChild(el("rect", {
-      x: px(cx - T.cabeca.profundidade / 2 + 18), y: px(altoT - T.monitor.cy - T.monitor.rec_a / 2),
-      width: px(30), height: px(T.monitor.rec_a),
+      x: px(cx - T.cabeca.profundidade / 2 + 18), y: px(altoT - T.monitor.cy - T.monitor.moldura_a / 2),
+      width: px(30), height: px(T.monitor.moldura_a),
       class: "componente"
     }));
     // Câmera
@@ -396,7 +412,7 @@ function renderPrincipalLateral() {
   // Cotas
   cotaH(g, cx - T.cabeca.profundidade / 2, cx + T.cabeca.profundidade / 2, altoT - T.cabeca.y_fim - 10, "180");
   cotaH(g, cx - T.coluna.profundidade / 2, cx + T.coluna.profundidade / 2, altoT - T.coluna.y_inicio + 10, "130", { dir: -1, offset: 20 });
-  cotaV(g, altoT, 0, larguraDesenho, "1600", { offset: 25 });
+  cotaV(g, altoT, 0, larguraDesenho, String(altoT), { offset: 25 });
 }
 
 function renderPrincipalSuperior() {
@@ -615,9 +631,9 @@ function renderConjunto() {
     );
     g.appendChild(el("path", { d: stad, class: "estrutura" }));
 
-    // Tela
+    // Tela (área visível, deslocada pela regulagem offset_y)
     g.appendChild(el("rect", {
-      x: (xPrinc - T.monitor.rec_l / 2) * escala, y: (T.altura - T.monitor.cy - T.monitor.rec_a / 2) * escala,
+      x: (xPrinc - T.monitor.rec_l / 2) * escala, y: (T.altura - (T.monitor.cy + T.monitor.offset_y) - T.monitor.rec_a / 2) * escala,
       width: T.monitor.rec_l * escala, height: T.monitor.rec_a * escala,
       class: "tela"
     }));
@@ -665,7 +681,7 @@ function renderConjunto() {
 
   // Labels
   const t1 = el("text", { x: xPrinc * escala, y: PRINCIPAL.altura * escala + 18, "text-anchor": "middle", class: "label-small" });
-  t1.textContent = "PRINCIPAL · 1620";
+  t1.textContent = "PRINCIPAL · " + PRINCIPAL.altura;
   g.appendChild(t1);
   const t2 = el("text", { x: xImpr * escala, y: PRINCIPAL.altura * escala + 18, "text-anchor": "middle", class: "label-small" });
   t2.textContent = "IMPRESSORA · 920";
@@ -685,17 +701,17 @@ const PECAS_PRINCIPAL = [
   { cod: "B1-L", nome: "Lâmina madeira frontal", mat: "Lâmina 0.6 mm", esp: 0.6, l: 120, a: 990, qtd: 1, obs: "Carvalho/freijó natural. Colar antes de fresar canaleta", desenha: dRetSimples },
   { cod: "B2", nome: "Traseiro coluna", mat: "MDF 15 mm", esp: 15, l: 120, a: 990, qtd: 1, obs: "Removível - parafusos M4 (acesso manutenção)", desenha: dRetSimples },
   { cod: "B3", nome: "Laterais coluna", mat: "MDF 15 mm", esp: 15, l: 100, a: 990, qtd: 2, obs: "Largura = 130 − 2×15 = 100 mm (coluna 130 mm de profundidade)", desenha: dRetSimples },
-  { cod: "C1", nome: "Frontal cabeça", mat: "MDF 18 mm", esp: 18, l: 320, a: 550, qtd: 1, obs: "Stadium 320×550 R160. Furo lente ⌀68 + rebaixo aro ⌀95×8 prof (centro 80 mm do topo). Recorte monitor 180×315 vertical (centro 320 mm topo) + rebaixo 190×325×4 prof. Canal LED perimetral 10×8 a 18 mm da borda", desenha: dCabecaFrontal },
-  { cod: "C2", nome: "Traseiro cabeça", mat: "MDF 15 mm", esp: 15, l: 320, a: 550, qtd: 1, obs: "Stadium 320×550 R160. Porta magnética 260×470 incluída (imãs + fechadura)", desenha: dCabecaTraseira },
-  { cod: "C3-P", nome: "Pele lateral cabeça", mat: "MDF flex 3 mm", esp: 3, l: 1465, a: 180, qtd: 1, obs: "Perímetro stadium 320×550 R160 = ~1465 mm × 180 mm altura. Cola PVA + grampos finos", desenha: dTira },
+  { cod: "C1", nome: "Frontal cabeça", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Furo lente ⌀68 + rebaixo aro ⌀95×8 prof (centro 80 mm do topo). Monitor 15.6\" EM PÉ: rebaixo da moldura 220×360×4 prof + recorte da tela visível 194×345 deslocado 6 mm p/ cima (regulagem da borda inferior). Canal LED perimetral 10×8 a 18 mm da borda", desenha: dCabecaFrontal },
+  { cod: "C2", nome: "Traseiro cabeça", mat: "MDF 15 mm", esp: 15, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Porta magnética 270×490 incluída (imãs + fechadura)", desenha: dCabecaTraseira },
+  { cod: "C3-P", nome: "Pele lateral cabeça", mat: "MDF flex 3 mm", esp: 3, l: 1588, a: 180, qtd: 1, obs: "Perímetro stadium 340×600 R170 = ~1588 mm × 180 mm altura. Cola PVA + grampos finos", desenha: dTira },
   { cod: "H1", nome: "Haste lateral esquerda", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — conecta C1 a C2 (144 = 180 prof − 2×18)", desenha: dRetSimples },
   { cod: "H2", nome: "Haste lateral direita", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — conecta C1 a C2", desenha: dRetSimples },
   { cod: "H3", nome: "Haste inferior esquerda", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — reforço inferior", desenha: dRetSimples },
   { cod: "H4", nome: "Haste inferior direita", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — reforço inferior", desenha: dRetSimples },
   { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — topo do arco stadium", desenha: dRetSimples },
-  { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 220, a: 20, qtd: 2, obs: "Barras horizontais (1 acima + 1 abaixo do monitor 200 mm)", desenha: dRetSimples },
+  { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais (1 acima + 1 abaixo da moldura do monitor de 360 mm de altura)", desenha: dRetSimples },
   { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Furo central rosca 1/4\" para fixar Canon EOS Rebel T7", desenha: dSuporteCamera },
-  { cod: "T1", nome: "Tubo estrutural coluna", mat: "Tubo metálico 20×20", esp: 0, l: 1600, a: 20, qtd: 2, obs: "Esqueleto interno: tubo 20×20 mm — corre da base até dentro da cabeça (~1600 mm)", desenha: dTubo }
+  { cod: "T1", nome: "Tubo estrutural coluna", mat: "Tubo metálico 20×20", esp: 0, l: 1650, a: 20, qtd: 2, obs: "Esqueleto interno: tubo 20×20 mm — corre da base até dentro da cabeça (~1650 mm)", desenha: dTubo }
 ];
 
 const PECAS_IMPRESSORA = [
@@ -894,35 +910,38 @@ function dCabecaFrontal(g, p, esc) {
   const stadLed = stadiumPath(cx * esc, cy * esc, (p.l - ofs) * esc, (p.a - ofs) * esc);
   g.appendChild(el("path", { d: stadLed, fill: "none", stroke: "#d4a04a", "stroke-width": 0.8, "stroke-dasharray": "3 2" }));
 
-  // Câmera: aro decorativo ⌀95 + furo lente ⌀68 (centro a 80mm do topo)
-  const camY = 80;
-  g.appendChild(el("circle", { cx: cx * esc, cy: camY * esc, r: 47.5 * esc, fill: "none", stroke: "#a89178", "stroke-width": 0.8, "stroke-dasharray": "2 2" }));
-  g.appendChild(el("circle", { cx: cx * esc, cy: camY * esc, r: 34 * esc, class: "recorte" }));
+  // Posições medidas a partir do TOPO da cabeça
+  const cab = PRINCIPAL.cabeca, cam = PRINCIPAL.camera, M = PRINCIPAL.monitor;
+  const camY = cab.y_fim - cam.cy;                  // câmera (80mm do topo)
+  const molY = cab.y_fim - M.cy;                    // centro da moldura
+  const recY = cab.y_fim - (M.cy + M.offset_y);     // centro do recorte (regulagem)
+
+  // Câmera: aro decorativo ⌀95 + furo lente ⌀68
+  g.appendChild(el("circle", { cx: cx * esc, cy: camY * esc, r: cam.aro / 2 * esc, fill: "none", stroke: "#a89178", "stroke-width": 0.8, "stroke-dasharray": "2 2" }));
+  g.appendChild(el("circle", { cx: cx * esc, cy: camY * esc, r: cam.furo / 2 * esc, class: "recorte" }));
   const t1 = el("text", { x: (cx + 52) * esc, y: camY * esc, class: "cota-texto" });
   t1.textContent = "⌀68 / aro ⌀95";
   g.appendChild(t1);
 
-  // Recorte monitor vertical (centro a 320mm do topo)
-  const monY = 320;
-  const monW = 180, monH = 315;
-  // rebaixo 190×325 (linha tracejada externa)
+  // Moldura do monitor 220×360 (rebaixo, tracejada) — monitor em pé
   g.appendChild(el("rect", {
-    x: (cx - (monW + 10) / 2) * esc, y: (monY - (monH + 10) / 2) * esc,
-    width: (monW + 10) * esc, height: (monH + 10) * esc,
+    x: (cx - M.moldura_l / 2) * esc, y: (molY - M.moldura_a / 2) * esc,
+    width: M.moldura_l * esc, height: M.moldura_a * esc,
     fill: "none", stroke: "#9e8a6f", "stroke-width": 0.6, "stroke-dasharray": "2 2"
   }));
+  // Recorte da tela visível (área ativa, deslocado p/ cima pela regulagem)
   g.appendChild(el("rect", {
-    x: (cx - monW / 2) * esc, y: (monY - monH / 2) * esc,
-    width: monW * esc, height: monH * esc,
+    x: (cx - M.rec_l / 2) * esc, y: (recY - M.rec_a / 2) * esc,
+    width: M.rec_l * esc, height: M.rec_a * esc,
     class: "recorte"
   }));
-  const t2 = el("text", { x: cx * esc, y: monY * esc + 4, "text-anchor": "middle", class: "cota-texto" });
-  t2.textContent = "180×315 (rebaixo 4mm)";
+  const t2 = el("text", { x: cx * esc, y: recY * esc + 4, "text-anchor": "middle", class: "cota-texto" });
+  t2.textContent = M.rec_l + "×" + M.rec_a + " (moldura " + M.moldura_l + "×" + M.moldura_a + ", rebaixo " + M.rebaixo + "mm)";
   g.appendChild(t2);
 
   // Cotas Y
-  cotaVCanvas(g, 0, camY, p.l, esc, "80", 1);
-  cotaVCanvas(g, 0, monY - monH / 2, -10, esc, String(monY - monH / 2), -1);
+  cotaVCanvas(g, 0, camY, p.l, esc, String(camY), 1);
+  cotaVCanvas(g, 0, recY - M.rec_a / 2, -10, esc, String(recY - M.rec_a / 2), -1);
 }
 
 function dCabecaTraseira(g, p, esc) {
@@ -931,8 +950,8 @@ function dCabecaTraseira(g, p, esc) {
   const stad = stadiumPath(cx * esc, cy * esc, p.l * esc, p.a * esc);
   g.appendChild(el("path", { d: stad, class: "estrutura" }));
 
-  // Porta magnética 260×470 centralizada (ajustada para cabeça 550)
-  const portaW = 260, portaH = 470;
+  // Porta magnética centralizada (margens ~35mm laterais, ~55mm topo/base)
+  const portaW = p.l - 70, portaH = p.a - 110;
   g.appendChild(el("rect", {
     x: (cx - portaW / 2) * esc, y: (cy - portaH / 2) * esc,
     width: portaW * esc, height: portaH * esc,
@@ -949,7 +968,7 @@ function dCabecaTraseira(g, p, esc) {
   g.appendChild(el("circle", { cx: cx * esc, cy: cy * esc, r: 6 * esc, fill: "#444" }));
 
   const t = el("text", { x: cx * esc, y: (cy + 18) * esc, "text-anchor": "middle", class: "cota-texto" });
-  t.textContent = "Porta 260×470 (imãs+fechadura)";
+  t.textContent = "Porta " + portaW + "×" + portaH + " (imãs+fechadura)";
   g.appendChild(t);
 }
 
@@ -1109,7 +1128,7 @@ const ETAPAS = [
     "Posicionar contrapeso de aço (3–5 kg) sobre A2.",
     "Colar feltros antiderrapantes embaixo de A2."
   ]},
-  { titulo: "Instalação do Tubo Estrutural (T1)", meta: "Etapa 4", desc: "Os 2 tubos metálicos 20×20×1600 mm formam o esqueleto que corre da base até dentro da cabeça.", itens: [
+  { titulo: "Instalação do Tubo Estrutural (T1)", meta: "Etapa 4", desc: "Os 2 tubos metálicos 20×20×1650 mm formam o esqueleto que corre da base até dentro da cabeça.", itens: [
     "Posicionar 2 tubos T1 verticalmente no centro da base, espaçados ~30 mm.",
     "Fixar com cantoneiras em A2 (4 parafusos auto-atarraxantes 4.2×13 mm por tubo).",
     "Conferir esquadro e prumo — os tubos definem a rigidez de toda a coluna.",
@@ -1130,28 +1149,28 @@ const ETAPAS = [
     "Deixar sobra de fio inferior (driver na base) e superior (LED da cabeça)."
   ]},
   { titulo: "Montagem da Cabeça", meta: "Etapa 7", desc: "Ordem: suportes em C1 → hastes H1-H5 → C2 (porta magnética) → pele C3-P.", itens: [
-    "C4 inferior: parafusar 15 mm abaixo do recorte do monitor (220 mm horizontal).",
-    "C4 superior: parafusar 15 mm acima do recorte.",
+    "C4 inferior: parafusar 15 mm abaixo da moldura do monitor (240 mm horizontal).",
+    "C4 superior: parafusar 15 mm acima da moldura.",
     "C5: parafusar atrás do furo da câmera, alinhado ao centro. Verificar acesso ao parafuso 1/4\" da Canon EOS Rebel T7.",
     "Parafusar hastes H1-H5 (144×40 mm — note: 144 = 180 prof − 2×18) por dentro de C1.",
     "Encaixar C2 nas pontas das hastes. Instalar 16 imãs de neodímio ⌀10×3 mm (4 em C2 + 4 nas hastes) + 1 fechadura push-lock central. NÃO usar cola — C2 fica removível.",
-    "Envolver toda a lateral com C3-P (MDF flex 3 mm, ~1296 × 180 mm): cola PVA + grampos finos."
+    "Envolver toda a lateral com C3-P (MDF flex 3 mm, ~1588 × 180 mm): cola PVA + grampos finos."
   ]},
-  { titulo: "Instalação do LED da Cabeça", meta: "Etapa 8", desc: "Fita LED perimetral ~1053 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
+  { titulo: "Instalação do LED da Cabeça", meta: "Etapa 8", desc: "Fita LED perimetral ~1444 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
     "Inserir difusor acrílico leitoso (10 mm) no canal perimetral.",
-    "Colar fita LED contornando todo o perímetro (~1053 mm).",
+    "Colar fita LED contornando todo o perímetro (~1444 mm).",
     "Conectar aos fios que sobem da coluna.",
     "Testar acendimento antes de fechar."
   ]},
   { titulo: "Fixação da Cabeça na Coluna", meta: "Etapa 9", desc: "Encaixar cabeça sobre o topo da coluna — cabeça encaixa 20 mm sobre o topo.", itens: [
-    "Posicionar cabeça centralizada (coluna 120 mm dentro dos 320 mm de largura da cabeça).",
+    "Posicionar cabeça centralizada (coluna 120 mm dentro dos 340 mm de largura da cabeça).",
     "Os tubos T1 sobem ~20–40 mm para dentro da cabeça e fixam C1/hastes.",
     "Parafusar base de C1/H3/H4 nas laterais B3: 4 parafusos 3.5×30.",
     "Passar cabos LED pela coluna e verificar conexões."
   ]},
   { titulo: "Instalação dos Componentes Eletrônicos", meta: "Etapa 10", desc: "Tudo pela porta magnética traseira (sem C2).", itens: [
     "Mini PC: suporte VESA na traseira interna da cabeça.",
-    "Monitor 15.6\" vertical: encaixar nos suportes C4 (rebaixo de 4 mm na frente para a tela ficar embutida). Conectar HDMI + USB ao Mini PC.",
+    "Monitor 15.6\" touchscreen EM PÉ: encaixar na moldura 220×360 entre os suportes C4 (rebaixo de 4 mm na frente para a tela ficar embutida). A tela visível 194×345 fica deslocada 6 mm p/ cima — ajustar a regulagem (monitor.offset_y) conforme a borda inferior real. Conectar HDMI + USB + toque ao Mini PC.",
     "Câmera Canon EOS Rebel T7 + lente EF-S 18–55mm: rosquear no 1/4\" do C5. Apontar lente para o furo ⌀68 (aro decorativo ⌀95 embutido 8 mm).",
     "Organizar cabos. Descer alimentação pelos tubos T1.",
     "Driver LED 24V dentro da base, ao lado do contrapeso.",
