@@ -11,7 +11,6 @@ let principalGroup, impressoraGroup;
 let raycaster, mouse;
 const pieces = [];     // meshes alvo do raycaster (com userData)
 const leds = [];
-const tubos = [];
 const madeira = [];
 let isExploded = false;
 let initialized = false;
@@ -181,7 +180,6 @@ function buildPrincipal() {
   const begeEdge = mat(COLORS.baseEdge, { roughness: 0.6 });
   const hasteMat = mat(COLORS.haste, { roughness: 0.6 });
   const peleMat = mat(COLORS.base, { roughness: 0.5, side: THREE.DoubleSide });
-  const tuboMat = mat(COLORS.tubo, { roughness: 0.6, metalness: 0.75 });
   const madeiraMat = mat(COLORS.madeira, { roughness: 0.4 });
 
   // Coletores para grupos lógicos (explodir/filtrar)
@@ -347,7 +345,17 @@ function buildPrincipal() {
   ledMask.position.set(0, cabY, cabFront + 1.0);
   group.add(ledMask); cabecaItems.push(ledMask);
 
-  // Monitor — tela visível (área ativa), deslocada p/ cima pela regulagem
+  /* === MONITOR (corpo + tela visível) === */
+  // Corpo físico do monitor (caixa atrás do painel frontal) — visível no raio-X
+  const monBody = piece(
+    new THREE.BoxGeometry(T.monitor.moldura_l, T.monitor.moldura_a, 28),
+    mat(0x1a1a1e, { roughness: 0.5, metalness: 0.3 }),
+    { cod: 'MON', nome: 'Monitor Touch 15.6" (em pé)', mat: 'Moldura ' + T.monitor.moldura_l + '×' + T.monitor.moldura_a, l: T.monitor.moldura_l, a: T.monitor.moldura_a, obs: 'LCD 15.6" touchscreen montado em pé · recuo 3 mm + rebaixo 4 mm' }
+  );
+  monBody.position.set(0, T.monitor.cy, cabFront - 16);
+  group.add(monBody); cabecaItems.push(monBody);
+
+  // Tela visível (área ativa) na frente, deslocada p/ cima pela regulagem
   const mon = new THREE.Mesh(
     new THREE.PlaneGeometry(T.monitor.rec_l, T.monitor.rec_a),
     new THREE.MeshStandardMaterial({
@@ -356,17 +364,17 @@ function buildPrincipal() {
     })
   );
   mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront + 1.5);
-  mon.userData = { cod: 'MON', nome: 'Monitor Touch 15.6" (em pé)', mat: 'Tela visível ' + T.monitor.rec_l + '×' + T.monitor.rec_a, l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Moldura ' + T.monitor.moldura_l + '×' + T.monitor.moldura_a + ' mm · recuo 3 mm + rebaixo 4 mm · recorte deslocado ' + T.monitor.offset_y + ' mm p/ cima (borda inferior mais grossa)' };
+  mon.userData = { cod: 'MON', nome: 'Tela visível 15.6"', mat: 'Área ativa ' + T.monitor.rec_l + '×' + T.monitor.rec_a, l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Recorte deslocado ' + T.monitor.offset_y + ' mm p/ cima (borda inferior mais grossa)' };
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
 
-  // Câmera Canon T7 — aro + furo + lente
+  /* === CÂMERA Canon EOS Rebel T7 (aro + furo no painel + corpo DSLR interno) === */
   const aro = new THREE.Mesh(
     new THREE.RingGeometry(T.camera.furo / 2, T.camera.aro / 2, 64),
     mat(0xe8dcc6, { roughness: 0.55 })
   );
   aro.position.set(0, T.camera.cy, cabFront + 2.0);
-  aro.userData = { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 + furo ⌀68', obs: 'Lente EF-S 18-55mm IS. Rebaixo aro 8 mm de profundidade' };
+  aro.userData = { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 + furo ⌀68', obs: 'Corpo DSLR fixo no suporte C5 (1/4"). Lente aponta para o furo' };
   pieces.push(aro);
   group.add(aro); cabecaItems.push(aro);
 
@@ -374,28 +382,37 @@ function buildPrincipal() {
     new THREE.CircleGeometry(T.camera.furo / 2, 48),
     mat(0x202020, { roughness: 0.35, metalness: 0.4 })
   );
-  furo.position.set(0, T.camera.cy, cabFront + 2.1);
+  furo.position.set(0, T.camera.cy, cabFront + 1.9);
   group.add(furo); cabecaItems.push(furo);
 
-  const lente = new THREE.Mesh(
-    new THREE.CylinderGeometry(T.camera.furo / 2 - 2, T.camera.furo / 2 - 5, 40, 32),
-    mat(0x0e0e10, { roughness: 0.2, metalness: 0.55 })
+  // Corpo da câmera (DSLR) dentro da cabeça, atrás do furo — visível no raio-X
+  const camBody = piece(
+    new THREE.BoxGeometry(140, 100, 75),
+    mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
+    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via parafuso 1/4" UNC no suporte C5' }
+  );
+  camBody.position.set(0, T.camera.cy, cabFront - 60);
+  group.add(camBody); cabecaItems.push(camBody);
+
+  // Lente EF-S 18-55mm apontando para o furo
+  const lente = piece(
+    new THREE.CylinderGeometry(30, 33, 30, 32),
+    mat(0x0e0e10, { roughness: 0.25, metalness: 0.5 }),
+    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Aponta para o furo ⌀68' }
   );
   lente.rotation.x = Math.PI / 2;
-  lente.position.set(0, T.camera.cy, cabFront + 20);
-  lente.userData = { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Fixada via parafuso 1/4" UNC no suporte C5' };
-  pieces.push(lente);
+  lente.position.set(0, T.camera.cy, cabFront - 17);
   group.add(lente); cabecaItems.push(lente);
 
-  /* === TUBOS T1 (2× 20×20×1650) === */
-  const t1Len = window.ESTRUTURA?.tubos_principal?.comprimento ?? 1650;
-  for (let i = 0; i < 2; i++) {
-    const t = piece(new THREE.BoxGeometry(20, t1Len, 20), tuboMat, pcInfo('T1'));
-    t.position.set(i === 0 ? -16 : 16, t1Len / 2, 0);
-    t.visible = false;
-    tubos.push(t);
-    group.add(t);
-  }
+  /* === MINI PC (caixa na traseira interna da cabeça) — visível no raio-X === */
+  const mp = T.mini_pc;
+  const miniPc = piece(
+    new THREE.BoxGeometry(mp.l, mp.l, mp.a),
+    mat(0x2b2b30, { roughness: 0.5, metalness: 0.35 }),
+    { cod: 'MINIPC', nome: 'Mini PC', mat: 'Caixa ' + mp.l + '×' + mp.p + '×' + mp.a, l: mp.l, a: mp.a, obs: 'Suporte VESA na traseira interna da cabeça. HDMI + USB para o monitor e câmera' }
+  );
+  miniPc.position.set(0, mp.cy, -cabFront + 15 + mp.a / 2);
+  group.add(miniPc); cabecaItems.push(miniPc);
 
   group.userData = { cabecaItems, colunaItems, baseItems };
   group.position.set(-475, 0, 0);
@@ -411,7 +428,6 @@ function buildImpressora() {
 
   const bege = mat(COLORS.base, { roughness: 0.55 });
   const begeEdge = mat(COLORS.baseEdge, { roughness: 0.6 });
-  const tuboMat = mat(COLORS.tubo, { roughness: 0.6, metalness: 0.75 });
   const madeiraMat = mat(COLORS.madeira, { roughness: 0.4 });
 
   const baseItems = [], colunaItems = [], caixaItems = [];
@@ -545,16 +561,6 @@ function buildImpressora() {
   pieces.push(porta);
   group.add(porta); caixaItems.push(porta);
 
-  /* === TUBOS T2 (2× 20×20×850) === */
-  const t2Len = window.ESTRUTURA?.tubos_impressora?.comprimento ?? 850;
-  for (let i = 0; i < 2; i++) {
-    const t = piece(new THREE.BoxGeometry(20, t2Len, 20), tuboMat, pcInfo('T2'));
-    t.position.set(i === 0 ? -16 : 16, T.base.altura + t2Len / 2 - 30, 0);
-    t.visible = false;
-    tubos.push(t);
-    group.add(t);
-  }
-
   group.userData = { caixaItems, colunaItems, baseItems };
   group.position.set(475, 0, 0);
   impressoraGroup = group;
@@ -632,19 +638,21 @@ function setupToolbar() {
     madeira.forEach(m => { m.visible = on; });
   });
 
-  const tubBtn = document.getElementById('t3d-tubos');
-  tubBtn?.addEventListener('click', () => {
-    tubBtn.classList.toggle('active');
-    const on = tubBtn.classList.contains('active');
-    tubos.forEach(t => { t.visible = on; });
-    // semi-transparent shell when tubos visible
+  // Raio-X: deixa a casca semi-transparente para ver os componentes internos
+  // (monitor, câmera, mini PC). Mantém telas/LEDs/componentes opacos.
+  const INTERNOS = new Set(['MON', 'CAM', 'MINIPC']);
+  const xrayBtn = document.getElementById('t3d-internos');
+  xrayBtn?.addEventListener('click', () => {
+    xrayBtn.classList.toggle('active');
+    const on = xrayBtn.classList.contains('active');
     [principalGroup, impressoraGroup].forEach(g => {
       if (!g) return;
       const all = [...(g.userData.colunaItems || []), ...(g.userData.cabecaItems || []), ...(g.userData.caixaItems || [])];
       all.forEach(m => {
-        if (!m.material || m.userData?.cod?.startsWith('LED')) return;
+        const cod = m.userData?.cod;
+        if (!m.material || cod?.startsWith('LED') || INTERNOS.has(cod)) return;
         m.material.transparent = on;
-        m.material.opacity = on ? 0.4 : 1.0;
+        m.material.opacity = on ? 0.35 : 1.0;
         m.material.needsUpdate = true;
       });
     });
