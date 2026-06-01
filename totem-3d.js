@@ -367,22 +367,48 @@ function buildPrincipal() {
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
 
-  /* === CÂMERA Canon EOS Rebel T7 (aro + furo no painel + corpo DSLR interno) === */
-  const aro = new THREE.Mesh(
-    new THREE.RingGeometry(T.camera.furo / 2, T.camera.aro / 2, 64),
-    mat(0xe8dcc6, { roughness: 0.55 })
-  );
-  aro.position.set(0, T.camera.cy, cabFront + 2.0);
-  aro.userData = { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 + furo ⌀68', obs: 'Corpo DSLR fixo no suporte C5 (1/4"). Lente aponta para o furo' };
-  pieces.push(aro);
-  group.add(aro); cabecaItems.push(aro);
+  /* === CÂMERA Canon EOS Rebel T7 (lente embutida + corpo DSLR interno) === */
+  const aroR = T.camera.aro / 2;      // 47.5 (⌀95)
+  const furoR = T.camera.furo / 2;    // 34   (⌀68)
+  const bezelDepth = 7;               // bezel projeta ~7 mm da face
+  const bezelBack = cabFront + 0.5;   // fundo do rebaixo (junto à face)
 
-  const furo = new THREE.Mesh(
-    new THREE.CircleGeometry(T.camera.furo / 2, 48),
-    mat(0x202020, { roughness: 0.35, metalness: 0.4 })
+  // Parede do bezel (aro ⌀95) — cilindro aberto dando profundidade
+  const aroWall = piece(
+    new THREE.CylinderGeometry(aroR, aroR, bezelDepth, 48, 1, true),
+    mat(0xe8dcc6, { roughness: 0.55, side: THREE.DoubleSide }),
+    { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 + lente ⌀68 embutida', obs: 'Corpo DSLR fixo no suporte C5 (1/4"). Lente recuada ~' + bezelDepth + ' mm no aro' }
   );
-  furo.position.set(0, T.camera.cy, cabFront + 1.9);
-  group.add(furo); cabecaItems.push(furo);
+  aroWall.rotation.x = Math.PI / 2;
+  aroWall.position.set(0, T.camera.cy, bezelBack + bezelDepth / 2);
+  group.add(aroWall); cabecaItems.push(aroWall);
+
+  // Borda frontal do aro (anel raso na ponta do bezel)
+  const aroRim = new THREE.Mesh(
+    new THREE.RingGeometry(aroR - 2, aroR, 48),
+    mat(0xd8c9b0, { roughness: 0.5 })
+  );
+  aroRim.position.set(0, T.camera.cy, bezelBack + bezelDepth);
+  aroRim.userData = { cod: 'CAM' };
+  group.add(aroRim); cabecaItems.push(aroRim);
+
+  // Fundo do rebaixo (placa atrás da lente)
+  const recessBack = new THREE.Mesh(
+    new THREE.CircleGeometry(aroR, 48),
+    mat(0x1a1a1d, { roughness: 0.6 })
+  );
+  recessBack.position.set(0, T.camera.cy, bezelBack);
+  recessBack.userData = { cod: 'CAM' };
+  group.add(recessBack); cabecaItems.push(recessBack);
+
+  // Lente (vidro escuro ⌀68) no fundo do rebaixo
+  const lensGlass = piece(
+    new THREE.CircleGeometry(furoR, 48),
+    mat(0x0b0d18, { roughness: 0.12, metalness: 0.5 }),
+    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Vidro ⌀68', obs: 'Embutida no aro ⌀95' }
+  );
+  lensGlass.position.set(0, T.camera.cy, bezelBack + 0.3);
+  group.add(lensGlass); cabecaItems.push(lensGlass);
 
   // Corpo da câmera (DSLR) dentro da cabeça, atrás do furo — visível no raio-X
   const camBody = piece(
@@ -393,14 +419,14 @@ function buildPrincipal() {
   camBody.position.set(0, T.camera.cy, cabFront - 60);
   group.add(camBody); cabecaItems.push(camBody);
 
-  // Lente EF-S 18-55mm apontando para o furo
+  // Barril da lente (interno) — liga o corpo DSLR ao vidro da frente
   const lente = piece(
-    new THREE.CylinderGeometry(30, 33, 30, 32),
+    new THREE.CylinderGeometry(30, 33, 24, 32),
     mat(0x0e0e10, { roughness: 0.25, metalness: 0.5 }),
-    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Aponta para o furo ⌀68' }
+    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Barril interno apontando para o furo ⌀68' }
   );
   lente.rotation.x = Math.PI / 2;
-  lente.position.set(0, T.camera.cy, cabFront - 17);
+  lente.position.set(0, T.camera.cy, cabFront - 13);
   group.add(lente); cabecaItems.push(lente);
 
   /* === MINI PC (caixa na traseira interna da cabeça) — visível no raio-X === */
