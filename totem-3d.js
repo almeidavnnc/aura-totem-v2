@@ -1,7 +1,7 @@
 /* ============================================================
    AURA · TOTEM V2 · Modelo 3D (Three.js UMD)
    Peças individuais (A1..F5) com tooltip via raycaster.
-   Lê PRINCIPAL/IMPRESSORA/ESTRUTURA + PECAS_PRINCIPAL/IMPRESSORA do window.
+   Lê PRINCIPAL/IMPRESSORA + PECAS_PRINCIPAL/IMPRESSORA do window.
    ============================================================ */
 
 const OrbitControls = THREE.OrbitControls;
@@ -23,7 +23,6 @@ const COLORS = {
   tela: 0x0d1224,
   led: 0xFFEAA7,
   ledHot: 0xffd97a,
-  tubo: 0x3D352A,
   porta: 0xb8956a,
   ground: 0xe8e2d6,
   bg: 0x2a2620,

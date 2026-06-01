@@ -108,12 +108,6 @@ const IMPRESSORA = {
   }
 };
 
-const ESTRUTURA = {
-  tubo_secao: 20,
-  tubos_principal: { qtd: 2, comprimento: 1650 },
-  tubos_impressora: { qtd: 2, comprimento: 850 }
-};
-
 const config = {
   escala: 0.32,
   cotas: true,
@@ -438,15 +432,6 @@ function renderPrincipalSuperior() {
     fill: "rgba(196, 168, 130, 0.4)", stroke: "#8b6f4f", "stroke-width": 0.8, "stroke-dasharray": "3 2"
   }));
 
-  // Tubo estrutural 20×20 dentro da coluna (indicação)
-  if (config.internos) {
-    g.appendChild(el("rect", {
-      x: px(cx - 10), y: px(cx - 10),
-      width: px(20), height: px(20),
-      fill: "#7a6a55", stroke: "#3d352a", "stroke-width": 0.6
-    }));
-  }
-
   // Furo cabo (traseira)
   g.appendChild(el("circle", {
     cx: px(cx), cy: px(cx + T.base.lado / 2 - 40), r: px(T.base.furo_cabo / 2),
@@ -710,8 +695,7 @@ const PECAS_PRINCIPAL = [
   { cod: "H4", nome: "Haste inferior direita", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — reforço inferior", desenha: dRetSimples },
   { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — topo do arco stadium", desenha: dRetSimples },
   { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais (1 acima + 1 abaixo da moldura do monitor de 360 mm de altura)", desenha: dRetSimples },
-  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Furo central rosca 1/4\" para fixar Canon EOS Rebel T7", desenha: dSuporteCamera },
-  { cod: "T1", nome: "Tubo estrutural coluna", mat: "Tubo metálico 20×20", esp: 0, l: 1650, a: 20, qtd: 2, obs: "Esqueleto interno: tubo 20×20 mm — corre da base até dentro da cabeça (~1650 mm)", desenha: dTubo }
+  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Furo central rosca 1/4\" para fixar Canon EOS Rebel T7", desenha: dSuporteCamera }
 ];
 
 const PECAS_IMPRESSORA = [
@@ -728,8 +712,7 @@ const PECAS_IMPRESSORA = [
   { cod: "F2", nome: "Traseiro caixa impr.", mat: "MDF 15 mm", esp: 15, l: 320, a: 250, qtd: 1, obs: "Cantos R40. Porta magnética 240×280 (imãs + fechadura)", desenha: dCantoArredondado },
   { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 364, a: 250, qtd: 2, obs: "Profundidade interna = 400 − 18 − 18 = 364 mm. Cantos R40 nas bordas", desenha: dRetSimples },
   { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 284, a: 364, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (284 = 320 − 2×18)", desenha: dRetSimples },
-  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 284, a: 364, qtd: 1, obs: "Furo central 120×120 (encaixe coluna)", desenha: dRetFuro },
-  { cod: "T2", nome: "Tubo estrutural coluna impr.", mat: "Tubo metálico 20×20", esp: 0, l: 850, a: 20, qtd: 2, obs: "Esqueleto interno: tubo 20×20 mm — corre da base até dentro da caixa (~850 mm)", desenha: dTubo }
+  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 284, a: 364, qtd: 1, obs: "Furo central 120×120 (encaixe coluna)", desenha: dRetFuro }
 ];
 
 /* ===== DESENHOS DAS PEÇAS ===== */
@@ -856,18 +839,6 @@ function dBaseQuadCaboImpr(g, p, esc) {
   g.appendChild(el("circle", { cx: (p.l / 2) * esc, cy: (p.a / 2 + 50) * esc, r: 12.5 * esc, class: "recorte" }));
   const t = el("text", { x: (p.l / 2) * esc, y: (p.a / 2 + 50) * esc + 14, "text-anchor": "middle", class: "cota-texto" });
   t.textContent = "⌀25";
-  g.appendChild(t);
-}
-
-/* === Tubo estrutural (representação fina) === */
-function dTubo(g, p, esc) {
-  // representação esquemática — tubo 20×20mm de comprimento p.l
-  g.appendChild(el("rect", {
-    x: 0, y: 0, width: p.l * esc, height: 20 * esc,
-    fill: "#7a6a55", stroke: "#3d352a", "stroke-width": 0.6
-  }));
-  const t = el("text", { x: p.l * esc / 2, y: 20 * esc + 14, "text-anchor": "middle", class: "label-small" });
-  t.textContent = "Tubo metálico 20×20 mm";
   g.appendChild(t);
 }
 
@@ -1114,11 +1085,11 @@ function renderListas() {
    ============================================================ */
 
 const ETAPAS = [
-  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V2 (módulo principal: 18 MDF + 1 lâmina + 2 tubos metálicos; módulo impressora: 14 MDF + 2 lâminas + 2 tubos). Identificar com fita-crepe e caneta." },
+  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V2 (módulo principal: 18 MDF + 1 lâmina; módulo impressora: 14 MDF + 2 lâminas). Identificar com fita-crepe e caneta." },
   { titulo: "Acabamento (ANTES da montagem)", meta: "1-2 dias", desc: "É muito mais fácil laquear e laminar antes de montar.", itens: [
     "Lâminas (B1-L, E1-L, F1-L): colar com cola de contato. Prensar com grampos 24h. Lixar bordas.",
     "Peças laqueadas: aplicar massa, lixar 180, primer/selador, lixar 320, 2 demãos de laca PU fosca bege/creme (4h entre demãos).",
-    "Não laquear: peças internas C4, C5, tubos T1/T2 e bordas de junção (recebem cola)."
+    "Não laquear: peças internas C4, C5 e bordas de junção (recebem cola)."
   ]},
   { titulo: "Montagem da Base Principal (quadrada)", meta: "Etapa 3", desc: "Ordem: A2 (fundo) → A3a/A3b (paredes laterais retas) → A1 (tampo). Base 400×400 R80, 60 mm de altura.", itens: [
     "Colocar A2 (fundo 18 mm) sobre superfície plana.",
@@ -1128,27 +1099,21 @@ const ETAPAS = [
     "Posicionar contrapeso de aço (3–5 kg) sobre A2.",
     "Colar feltros antiderrapantes embaixo de A2."
   ]},
-  { titulo: "Instalação do Tubo Estrutural (T1)", meta: "Etapa 4", desc: "Os 2 tubos metálicos 20×20×1650 mm formam o esqueleto que corre da base até dentro da cabeça.", itens: [
-    "Posicionar 2 tubos T1 verticalmente no centro da base, espaçados ~30 mm.",
-    "Fixar com cantoneiras em A2 (4 parafusos auto-atarraxantes 4.2×13 mm por tubo).",
-    "Conferir esquadro e prumo — os tubos definem a rigidez de toda a coluna.",
-    "Os painéis MDF da coluna (B1-B3) serão revestimento ao redor dos tubos."
-  ]},
-  { titulo: "Montagem da Coluna Principal", meta: "Etapa 5", desc: "Ordem: B3+B3 (laterais) → B1 (frontal) → B2 (traseiro parafusado). Painéis envolvem os tubos T1.", itens: [
+  { titulo: "Montagem da Coluna Principal", meta: "Etapa 4", desc: "Coluna é uma caixa de MDF autoportante: B3+B3 (laterais) → B1 (frontal) → B2 (traseiro parafusado). Colada e parafusada sobre a base.", itens: [
     "Pré-furar bordas de B3 com broca 2.5 mm.",
     "Colar e parafusar B3 esquerda em B1. Verificar esquadro.",
-    "Colar e parafusar B3 direita em B1.",
-    "NÃO colar B2 — apenas posicionar para verificar encaixe.",
-    "Deslizar conjunto B1+B3+B3 sobre os tubos T1. Espaço interno útil 60×60 mm.",
-    "Fixar painéis nos tubos com parafusos para metal (cantoneiras internas)."
+    "Colar e parafusar B3 direita em B1. Espaço interno útil 60×60 mm para a fiação.",
+    "NÃO colar B2 — apenas posicionar para verificar encaixe (fica removível para manutenção).",
+    "Encaixar e colar o conjunto B1+B3+B3 sobre o furo central do tampo A1 (120×130). Reforçar com cantoneiras internas + 4 parafusos 3.5×30 por baixo de A1.",
+    "Conferir esquadro e prumo da coluna."
   ]},
-  { titulo: "Instalação do LED da Coluna", meta: "Etapa 6", desc: "Cortar fita LED COB 1060 mm e instalar na canaleta de B1.", itens: [
+  { titulo: "Instalação do LED da Coluna", meta: "Etapa 5", desc: "Cortar fita LED COB 1060 mm e instalar na canaleta de B1.", itens: [
     "Inserir difusor acrílico leitoso (15 mm) na canaleta.",
     "Colar fita LED com adesivo voltado para o fundo.",
     "Encaixar difusor sobre a fita, rente à superfície.",
     "Deixar sobra de fio inferior (driver na base) e superior (LED da cabeça)."
   ]},
-  { titulo: "Montagem da Cabeça", meta: "Etapa 7", desc: "Ordem: suportes em C1 → hastes H1-H5 → C2 (porta magnética) → pele C3-P.", itens: [
+  { titulo: "Montagem da Cabeça", meta: "Etapa 6", desc: "Ordem: suportes em C1 → hastes H1-H5 → C2 (porta magnética) → pele C3-P.", itens: [
     "C4 inferior: parafusar 15 mm abaixo da moldura do monitor (240 mm horizontal).",
     "C4 superior: parafusar 15 mm acima da moldura.",
     "C5: parafusar atrás do furo da câmera, alinhado ao centro. Verificar acesso ao parafuso 1/4\" da Canon EOS Rebel T7.",
@@ -1156,41 +1121,40 @@ const ETAPAS = [
     "Encaixar C2 nas pontas das hastes. Instalar 16 imãs de neodímio ⌀10×3 mm (4 em C2 + 4 nas hastes) + 1 fechadura push-lock central. NÃO usar cola — C2 fica removível.",
     "Envolver toda a lateral com C3-P (MDF flex 3 mm, ~1588 × 180 mm): cola PVA + grampos finos."
   ]},
-  { titulo: "Instalação do LED da Cabeça", meta: "Etapa 8", desc: "Fita LED perimetral ~1444 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
+  { titulo: "Instalação do LED da Cabeça", meta: "Etapa 7", desc: "Fita LED perimetral ~1444 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
     "Inserir difusor acrílico leitoso (10 mm) no canal perimetral.",
     "Colar fita LED contornando todo o perímetro (~1444 mm).",
     "Conectar aos fios que sobem da coluna.",
     "Testar acendimento antes de fechar."
   ]},
-  { titulo: "Fixação da Cabeça na Coluna", meta: "Etapa 9", desc: "Encaixar cabeça sobre o topo da coluna — cabeça encaixa 20 mm sobre o topo.", itens: [
+  { titulo: "Fixação da Cabeça na Coluna", meta: "Etapa 8", desc: "Encaixar cabeça sobre o topo da coluna — cabeça encaixa 20 mm sobre o topo.", itens: [
     "Posicionar cabeça centralizada (coluna 120 mm dentro dos 340 mm de largura da cabeça).",
-    "Os tubos T1 sobem ~20–40 mm para dentro da cabeça e fixam C1/hastes.",
-    "Parafusar base de C1/H3/H4 nas laterais B3: 4 parafusos 3.5×30.",
+    "Parafusar a base de C1/H3/H4 nas laterais B3 da coluna: 4 parafusos 3.5×30 (esta fixação parafusada é o que sustenta a cabeça).",
+    "Reforçar com cantoneiras internas entre as hastes inferiores e o topo da coluna.",
     "Passar cabos LED pela coluna e verificar conexões."
   ]},
-  { titulo: "Instalação dos Componentes Eletrônicos", meta: "Etapa 10", desc: "Tudo pela porta magnética traseira (sem C2).", itens: [
+  { titulo: "Instalação dos Componentes Eletrônicos", meta: "Etapa 9", desc: "Tudo pela porta magnética traseira (sem C2).", itens: [
     "Mini PC: suporte VESA na traseira interna da cabeça.",
     "Monitor 15.6\" touchscreen EM PÉ: encaixar na moldura 220×360 entre os suportes C4 (rebaixo de 4 mm na frente para a tela ficar embutida). A tela visível 194×345 fica deslocada 6 mm p/ cima — ajustar a regulagem (monitor.offset_y) conforme a borda inferior real. Conectar HDMI + USB + toque ao Mini PC.",
     "Câmera Canon EOS Rebel T7 + lente EF-S 18–55mm: rosquear no 1/4\" do C5. Apontar lente para o furo ⌀68 (aro decorativo ⌀95 embutido 8 mm).",
-    "Organizar cabos. Descer alimentação pelos tubos T1.",
+    "Organizar cabos. Descer alimentação pelo interior da coluna.",
     "Driver LED 24V dentro da base, ao lado do contrapeso.",
     "Teste geral: ligar energia, testar monitor, câmera, LEDs."
   ]},
-  { titulo: "Fechamento", meta: "Etapa 11", desc: "Fixar painéis com sistema magnético + fechadura.", itens: [
+  { titulo: "Fechamento", meta: "Etapa 10", desc: "Fixar painéis com sistema magnético + fechadura.", itens: [
     "C2 (traseira cabeça): encaixar com imãs + fechar fechadura central. SEM cola, SEM parafusos.",
     "B2 (traseira coluna): parafusos M4 nos insertos. SEM cola.",
     "Conferir que todas as portas magnéticas fecham firmemente."
   ]},
-  { titulo: "Montagem do Módulo Impressora", meta: "Etapa 12", desc: "Mesma lógica do principal: base quadrada → tubos T2 → coluna → caixa para ASK-400 (manutenção FRONTAL).", itens: [
+  { titulo: "Montagem do Módulo Impressora", meta: "Etapa 11", desc: "Mesma lógica do principal: base quadrada → coluna (caixa de MDF) → caixa para ASK-400 (manutenção FRONTAL).", itens: [
     "Base 350×350 R80: D2 → D3a/D3b (paredes) → D1 (tampo). Sem contrapeso.",
-    "Tubos T2 (2× 20×20×850 mm): fixar verticalmente no centro da base.",
-    "Coluna 610 mm: E3+E3 → E1 → colar na base → LED vertical (610 mm).",
+    "Coluna 610 mm: E3+E3 → E1 → colar e parafusar sobre o furo central do tampo D1 → LED vertical (610 mm).",
     "Caixa 320×250×400: F5 (fundo, furo 120×120) → F3+F3 (laterais, 364×250) → F4 (topo) → F1 (frontal com lâmina, slot + porta).",
     "Encaixar caixa sobre coluna (F5 no topo). Parafusar por dentro.",
     "Instalar impressora ASK-400 — manutenção FRONTAL pela porta magnética 280×220 de F1.",
     "Fechar: E2 (parafusos M4) + F2 (porta magnética traseira 240×280 — imãs + fechadura)."
   ]},
-  { titulo: "Posicionamento Final", meta: "Etapa 13", desc: "Posicionar e conectar os dois módulos.", itens: [
+  { titulo: "Posicionamento Final", meta: "Etapa 12", desc: "Posicionar e conectar os dois módulos.", itens: [
     "Posicionar totem principal no local desejado.",
     "Posicionar impressora ao lado (~30 cm de distância).",
     "Conectar USB entre Mini PC e impressora ASK-400 (canaleta de chão ou sob tapete).",
@@ -1298,6 +1262,5 @@ renderAll();
 /* Expor constantes V2 + listas de peças para o módulo 3D (totem-3d.js) */
 window.PRINCIPAL = PRINCIPAL;
 window.IMPRESSORA = IMPRESSORA;
-window.ESTRUTURA = ESTRUTURA;
 window.PECAS_PRINCIPAL = PECAS_PRINCIPAL;
 window.PECAS_IMPRESSORA = PECAS_IMPRESSORA;
