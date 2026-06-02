@@ -379,12 +379,12 @@ function buildPrincipal() {
     ),
     begeEdge, pcInfo('CE')
   );
-  ce.position.set(0, cabY, -36);   // recuado 90 mm atrás do C1 (vão das hastes); janela dá acesso ao interior
+  ce.position.set(0, cabY, -75);   // na TRASEIRA, encostado no C2 (recebe a dobradiça da porta); janela dá acesso ao interior
   group.add(ce); cabecaItems.push(ce);
 
-  // Hastes H1-H5 — espaçadores 90 mm ligando o C1 (face interna z=72) ao CE (face frontal z=-18)
-  const hLen = 90;           // l do plano de corte
-  const hZ = 27;             // centro do vão C1↔CE (-18 → +72)
+  // Hastes H1-H5 — espaçadores ligando o C1 (face interna z=72) ao CE na traseira (face frontal z=-57)
+  const hLen = 129;          // vão real C1 → CE (com o CE encostado na porta traseira C2)
+  const hZ = 7.5;            // centro do vão C1↔CE (-57 → +72)
   const hX = T.cabeca.largura / 2 - 30; // 140
   const hY1 = cabY;
   const hY2 = T.cabeca.y_inicio + 70;
@@ -418,7 +418,7 @@ function buildPrincipal() {
     ),
     peleMat, pcInfo('C3-P')
   );
-  skin.position.z = -cabFront;
+  skin.position.set(0, cabY, -cabFront);   // centrado na ALTURA da cabeça (estava caindo p/ y=0)
   group.add(skin); cabecaItems.push(skin);
 
   // LED perimetral — anel FINO emissivo (largura do canal, a 18 mm da borda)
