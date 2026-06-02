@@ -164,10 +164,7 @@ def build_principal(x0, mats):
     # tela (monitor) na frente da máscara
     M = P["monitor"]
     add_box("P_screen", M["rec_l"], 1, M["rec_a"], (x0, front_y+2.5, M["cy"]+M["off"]), mats["screen"])
-    # câmera: aro ⌀95 EMBUTIDO rente à face (não projeta) + lente ⌀68 recuada no aro
-    cam = P["camera"]
-    add_cyl("P_cam_aro",  cam["aro"]/2, 4, (x0, front_y-1, cam["cy"]), "Y", mats["cammetal"])
-    add_cyl("P_cam_lens", cam["furo"]/2, 8, (x0, front_y-3, cam["cy"]), "Y", mats["glass"])
+    # (Câmera removida da frente da cabeça a pedido — sem aro/lente.)
 
 def build_impressora(x0, mats):
     I = IMPR
