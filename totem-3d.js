@@ -179,6 +179,19 @@ function addFlangesECabo(group, structItems, p) {
   });
 }
 
+/* Dobradiça realista discreta: pequenos canecos metálicos ao longo do eixo do pivô.
+   O pivô já está posicionado na linha da dobradiça, então os canecos vão em (0, y, 0). */
+function addHinges(pivot, axisLen, count) {
+  const hmat = mat(0x8a8d92, { metalness: 0.9, roughness: 0.35 });
+  const knH = Math.min(55, (axisLen * 0.7) / (count * 1.6));
+  for (let i = 0; i < count; i++) {
+    const frac = count === 1 ? 0.5 : i / (count - 1);
+    const k = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, knH, 16), hmat);
+    k.position.set(0, (frac - 0.5) * axisLen * 0.62, 0);
+    pivot.add(k);
+  }
+}
+
 /* ============== INIT ============== */
 
 function initThree() {
@@ -394,15 +407,16 @@ function buildPrincipal() {
   // Hastes H1-H5 — espaçadores ligando o C1 (face interna z=72) ao CE na traseira (face frontal z=-57)
   const hLen = 129;          // vão real C1 → CE (com o CE encostado na porta traseira C2)
   const hZ = 7.5;            // centro do vão C1↔CE (-57 → +72)
-  const hX = T.cabeca.largura / 2 - 30; // 140
+  const hX = T.cabeca.largura / 2 - 30; // 140 — no trecho reto da stadium (largura cheia)
+  const hXLow = 100;                    // pares inferiores: a cabeça estreita no cap → recolher p/ dentro
   const hY1 = cabY;
   const hY2 = T.cabeca.y_inicio + 70;
   const hY3 = T.cabeca.y_fim - 70;
   const hConfigs = [
     { cod: 'H1', pos: [-hX, hY1] },
     { cod: 'H2', pos: [ hX, hY1] },
-    { cod: 'H3', pos: [-hX, hY2] },
-    { cod: 'H4', pos: [ hX, hY2] },
+    { cod: 'H3', pos: [-hXLow, hY2] },
+    { cod: 'H4', pos: [ hXLow, hY2] },
     { cod: 'H5', pos: [ 0,  hY3] }
   ];
   hConfigs.forEach(c => {
@@ -553,9 +567,8 @@ function buildPrincipal() {
   miniPc.userData.isDoor = true;
   doorPivot.add(miniPc); cabecaItems.push(miniPc);
 
-  // marca da dobradiça (eixo vertical)
-  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, T.cabeca.altura * 0.8, 12), mat(0x2a2a2a, { metalness: 0.6, roughness: 0.4 }));
-  doorPivot.add(hinge);
+  // dobradiça realista discreta — 3 canecos metálicos na borda traseira
+  addHinges(doorPivot, T.cabeca.altura, 3);
   group.add(doorPivot);
 
   /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
@@ -732,9 +745,8 @@ function buildImpressora() {
   pieces.push(slot);
   doorPivot.add(slot); caixaItems.push(slot);
 
-  // marca da dobradiça
-  const ihinge = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, T.caixa.altura * 0.8, 12), mat(0x2a2a2a, { metalness: 0.6, roughness: 0.4 }));
-  doorPivot.add(ihinge);
+  // dobradiça realista discreta — 2 canecos metálicos na borda frontal
+  addHinges(doorPivot, T.caixa.altura, 2);
   group.add(doorPivot);
 
   /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
