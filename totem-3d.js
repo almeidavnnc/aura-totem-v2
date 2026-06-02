@@ -279,7 +279,31 @@ function buildPrincipal() {
   const colunaItems = [];
   const baseItems   = [];
 
-  /* === BASE QUADRADA 400×60×400 R80 === */
+  /* === BASE QUADRADA 400×60×400 R80 (A2 fundo → A3 paredes → A1 tampo) === */
+  // A2 fundo 18mm — com furo ⌀25 traseiro (passagem de cabo)
+  const a2shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
+  a2shape.holes.push(holeCircle(0, -(T.base.lado / 2 - 60), T.base.furo_cabo / 2));
+  const a2 = piece(
+    new THREE.ExtrudeGeometry(a2shape, { depth: 18, bevelEnabled: false }),
+    bege, pcInfo('A2')
+  );
+  a2.rotation.x = -Math.PI / 2;
+  a2.position.y = 18;
+  group.add(a2); baseItems.push(a2);
+
+  // A3a paredes longas (×2): 370 × 24, laterais — ao longo de Z em x = ±192.5
+  for (let i = 0; i < 2; i++) {
+    const w = piece(new THREE.BoxGeometry(15, 24, 370), begeEdge, pcInfo('A3a'));
+    w.position.set(i === 0 ? -192.5 : 192.5, 30, 0);
+    group.add(w); baseItems.push(w);
+  }
+  // A3b paredes curtas (×2): 340 × 24, frente/trás — ao longo de X em z = ±192.5 (entre as longas)
+  for (let i = 0; i < 2; i++) {
+    const w = piece(new THREE.BoxGeometry(340, 24, 15), begeEdge, pcInfo('A3b'));
+    w.position.set(0, 30, i === 0 ? 192.5 : -192.5);
+    group.add(w); baseItems.push(w);
+  }
+
   // A1 tampo 18mm — com soquete central 120×130 (encaixe da coluna), igual ao plano de corte
   const a1shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
   a1shape.holes.push(holeRect(0, 0, T.base.furo_central.l, T.base.furo_central.p));
@@ -290,28 +314,6 @@ function buildPrincipal() {
   a1.rotation.x = -Math.PI / 2;
   a1.position.y = 60;
   group.add(a1); baseItems.push(a1);
-
-  // A2 fundo 18mm
-  const a2 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos), { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('A2')
-  );
-  a2.rotation.x = -Math.PI / 2;
-  a2.position.y = 18;
-  group.add(a2); baseItems.push(a2);
-
-  // A3a longas (×2): 370 × 24 × 15 ao longo de X (frente/trás)
-  for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(370, 24, 15), begeEdge, pcInfo('A3a'));
-    w.position.set(0, 30, i === 0 ? 192.5 : -192.5);
-    group.add(w); baseItems.push(w);
-  }
-  // A3b curtas (×2): 15 × 24 × 340 ao longo de Z (esquerda/direita), entre as longas
-  for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(15, 24, 340), begeEdge, pcInfo('A3b'));
-    w.position.set(i === 0 ? 192.5 : -192.5, 30, 0);
-    group.add(w); baseItems.push(w);
-  }
 
   /* === COLUNA 120×990×130 === */
   const colY = T.coluna.y_inicio + T.coluna.altura / 2;
@@ -377,12 +379,12 @@ function buildPrincipal() {
     ),
     begeEdge, pcInfo('CE')
   );
-  ce.position.set(0, cabY, -75);   // fundo da cabeça, face traseira encostando no C2
+  ce.position.set(0, cabY, -36);   // recuado 90 mm atrás do C1 (vão das hastes); janela dá acesso ao interior
   group.add(ce); cabecaItems.push(ce);
 
-  // Hastes H1-H5 — espaçadores ligando o C1 (z=72) ao CE estrutural na traseira (z=-57)
-  const hLen = 129;          // 72 (face interna C1) − (−57) (face frontal CE)
-  const hZ = 7.5;            // centro do vão C1↔CE
+  // Hastes H1-H5 — espaçadores 90 mm ligando o C1 (face interna z=72) ao CE (face frontal z=-18)
+  const hLen = 90;           // l do plano de corte
+  const hZ = 27;             // centro do vão C1↔CE (-18 → +72)
   const hX = T.cabeca.largura / 2 - 30; // 140
   const hY1 = cabY;
   const hY2 = T.cabeca.y_inicio + 70;
@@ -400,37 +402,24 @@ function buildPrincipal() {
     group.add(h); cabecaItems.push(h);
   });
 
-  /* C3-P pele lateral (aproximada por 2 caps + 2 paredes) — toda com mesma userData */
-  // Cap superior — semicírculo apontando para +Y após rotation.x = PI/2
-  const capTop = piece(
-    new THREE.CylinderGeometry(T.cabeca.largura / 2, T.cabeca.largura / 2, T.cabeca.profundidade, 48, 1, true, Math.PI, Math.PI),
+  // C4 suportes do monitor (2 barras 240×20) fixas atrás do C1, acima/abaixo da moldura
+  [T.monitor.cy + T.monitor.moldura_a / 2 + 15, T.monitor.cy - T.monitor.moldura_a / 2 - 15].forEach(yy => {
+    const c4 = piece(new THREE.BoxGeometry(240, 20, 15), begeEdge, pcInfo('C4'));
+    c4.position.set(0, yy, 62);
+    group.add(c4); cabecaItems.push(c4);
+  });
+
+  // C3-P pele lateral — tubo stadium (parede 3 mm) extrudado nos 180 mm de profundidade,
+  // exatamente o perímetro do plano de corte. Envolve as laterais; C1 (frente) e C2 (trás) fecham.
+  const skin = piece(
+    new THREE.ExtrudeGeometry(
+      stadiumFrame(T.cabeca.largura, T.cabeca.altura, T.cabeca.largura - 6, T.cabeca.altura - 6),
+      { depth: T.cabeca.profundidade, bevelEnabled: false }
+    ),
     peleMat, pcInfo('C3-P')
   );
-  capTop.rotation.x = Math.PI / 2;
-  capTop.position.set(0, T.cabeca.y_fim - T.cabeca.largura / 2, 0);
-  group.add(capTop); cabecaItems.push(capTop);
-
-  // Cap inferior — semicírculo apontando para -Y
-  const capBot = piece(
-    new THREE.CylinderGeometry(T.cabeca.largura / 2, T.cabeca.largura / 2, T.cabeca.profundidade, 48, 1, true, 0, Math.PI),
-    peleMat, pcInfo('C3-P')
-  );
-  capBot.rotation.x = Math.PI / 2;
-  capBot.position.set(0, T.cabeca.y_inicio + T.cabeca.largura / 2, 0);
-  group.add(capBot); cabecaItems.push(capBot);
-
-  // Paredes laterais retas (entre os caps)
-  const sideH = T.cabeca.altura - T.cabeca.largura; // segmento reto da stadium
-  if (sideH > 0) {
-    const sideGeom = new THREE.PlaneGeometry(T.cabeca.profundidade, sideH);
-    [-1, 1].forEach(sign => {
-      const s = piece(sideGeom, peleMat, pcInfo('C3-P'));
-      s.rotation.y = sign * Math.PI / 2;
-      s.position.set(sign * T.cabeca.largura / 2, cabY, 0);
-      s.castShadow = false;
-      group.add(s); cabecaItems.push(s);
-    });
-  }
+  skin.position.z = -cabFront;
+  group.add(skin); cabecaItems.push(skin);
 
   // LED perimetral — anel FINO emissivo (largura do canal, a 18 mm da borda)
   const ofs = T.cabeca.led_canal.offset_borda;
@@ -453,7 +442,7 @@ function buildPrincipal() {
     mat(0x1a1a1e, { roughness: 0.5, metalness: 0.3 }),
     { cod: 'MON', nome: 'Monitor Touch 15.6" (em pé)', mat: 'Moldura ' + T.monitor.moldura_l + '×' + T.monitor.moldura_a, l: T.monitor.moldura_l, a: T.monitor.moldura_a, obs: 'LCD 15.6" touchscreen montado em pé · recuo 3 mm + rebaixo 4 mm' }
   );
-  monBody.position.set(0, T.monitor.cy, cabFront - 20);
+  monBody.position.set(0, T.monitor.cy, 58);  // logo atrás da face interna do C1 (z=72)
   group.add(monBody); cabecaItems.push(monBody);
 
   // Tela visível (área ativa) na frente, deslocada p/ cima pela regulagem
@@ -464,42 +453,33 @@ function buildPrincipal() {
       roughness: 0.2, metalness: 0.05
     })
   );
-  mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront - 4);  // recuada no recorte (recuo ~3 mm)
+  mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront - T.monitor.recuo);  // recuada recuo mm no recorte
   mon.userData = { cod: 'MON', nome: 'Tela visível 15.6"', mat: 'Área ativa ' + T.monitor.rec_l + '×' + T.monitor.rec_a, l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Recorte deslocado ' + T.monitor.offset_y + ' mm p/ cima (borda inferior mais grossa)' };
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
 
-  /* === CÂMERA Canon EOS Rebel T7 (lente embutida + corpo DSLR interno) === */
-  const aroR = T.camera.aro / 2;      // 47.5 (⌀95)
-  const furoR = T.camera.furo / 2;    // 34   (⌀68)
-  const bezelDepth = 7;               // bezel projeta ~7 mm da face
-  const bezelBack = cabFront + 0.5;   // fundo do rebaixo (junto à face)
+  /* === CÂMERA Canon EOS Rebel T7 — aro ⌀95 EMBUTIDO 8 mm + lente ⌀68 (igual ao C1 do corte) === */
+  const aroR = T.camera.aro / 2;              // 47.5 (⌀95)
+  const furoR = T.camera.furo / 2;            // 34   (⌀68)
+  const recessDepth = T.camera.aro_prof;      // 8 mm — rebaixo do aro na face
+  const recessFloor = cabFront - recessDepth; // 82 — fundo do rebaixo
 
-  // Parede do bezel (aro ⌀95) — cilindro aberto dando profundidade
+  // Parede do rebaixo do aro (⌀95) — recuada DENTRO da face frontal
   const aroWall = piece(
-    new THREE.CylinderGeometry(aroR, aroR, bezelDepth, 48, 1, true),
+    new THREE.CylinderGeometry(aroR, aroR, recessDepth, 48, 1, true),
     mat(0xe8dcc6, { roughness: 0.55, side: THREE.DoubleSide }),
-    { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 + lente ⌀68 embutida', obs: 'Corpo DSLR fixo no suporte C5 (1/4"). Lente recuada ~' + bezelDepth + ' mm no aro' }
+    { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 embutido 8 mm + lente ⌀68', obs: 'Corpo DSLR fixo no suporte C5 (rosca 1/4"). Aro recuado ' + recessDepth + ' mm na face' }
   );
   aroWall.rotation.x = Math.PI / 2;
-  aroWall.position.set(0, T.camera.cy, bezelBack + bezelDepth / 2);
+  aroWall.position.set(0, T.camera.cy, recessFloor + recessDepth / 2);
   group.add(aroWall); cabecaItems.push(aroWall);
 
-  // Borda frontal do aro (anel raso na ponta do bezel)
-  const aroRim = new THREE.Mesh(
-    new THREE.RingGeometry(aroR - 2, aroR, 48),
-    mat(0xd8c9b0, { roughness: 0.5 })
-  );
-  aroRim.position.set(0, T.camera.cy, bezelBack + bezelDepth);
-  aroRim.userData = { cod: 'CAM' };
-  group.add(aroRim); cabecaItems.push(aroRim);
-
-  // Fundo do rebaixo (placa atrás da lente)
+  // Fundo do rebaixo (placa escura ⌀95)
   const recessBack = new THREE.Mesh(
     new THREE.CircleGeometry(aroR, 48),
     mat(0x1a1a1d, { roughness: 0.6 })
   );
-  recessBack.position.set(0, T.camera.cy, bezelBack);
+  recessBack.position.set(0, T.camera.cy, recessFloor);
   recessBack.userData = { cod: 'CAM' };
   group.add(recessBack); cabecaItems.push(recessBack);
 
@@ -509,26 +489,34 @@ function buildPrincipal() {
     mat(0x0b0d18, { roughness: 0.12, metalness: 0.5 }),
     { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Vidro ⌀68', obs: 'Embutida no aro ⌀95' }
   );
-  lensGlass.position.set(0, T.camera.cy, bezelBack + 0.3);
+  lensGlass.position.set(0, T.camera.cy, recessFloor + 0.4);
   group.add(lensGlass); cabecaItems.push(lensGlass);
 
-  // Corpo da câmera (DSLR) dentro da cabeça, atrás do furo — visível no raio-X
+  // C5 suporte da câmera (160×80) — prateleira fixa no C1 com rosca 1/4"
+  const c5 = piece(
+    new THREE.BoxGeometry(160, 15, 80),
+    begeEdge, pcInfo('C5')
+  );
+  c5.position.set(0, T.camera.cy - 52, 8);
+  group.add(c5); cabecaItems.push(c5);
+
+  // Corpo da câmera (DSLR) apoiado no C5, atrás do furo — visível no raio-X
   const camBody = piece(
     new THREE.BoxGeometry(140, 100, 75),
     mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
     { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via parafuso 1/4" UNC no suporte C5' }
   );
-  camBody.position.set(0, T.camera.cy, cabFront - 60);
+  camBody.position.set(0, T.camera.cy + 5, 8);
   group.add(camBody); cabecaItems.push(camBody);
 
-  // Barril da lente (interno) — liga o corpo DSLR ao vidro da frente
+  // Barril da lente — liga o corpo DSLR ao vidro embutido, apontando para o furo ⌀68
   const lente = piece(
-    new THREE.CylinderGeometry(30, 33, 24, 32),
+    new THREE.CylinderGeometry(30, 33, 36, 32),
     mat(0x0e0e10, { roughness: 0.25, metalness: 0.5 }),
     { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Barril interno apontando para o furo ⌀68' }
   );
   lente.rotation.x = Math.PI / 2;
-  lente.position.set(0, T.camera.cy, cabFront - 13);
+  lente.position.set(0, T.camera.cy, recessFloor - 18);
   group.add(lente); cabecaItems.push(lente);
 
   /* === PORTA TRASEIRA C2 (basculante) + Mini PC montado nela === */
