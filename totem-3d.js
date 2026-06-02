@@ -377,10 +377,12 @@ function buildPrincipal() {
   const cabY = T.cabeca.y_inicio + T.cabeca.altura / 2;
   const cabFront = T.cabeca.profundidade / 2;  // +90
 
-  // C1 frontal stadium 18mm — recorte da janela do monitor (câmera removida da frente)
+  // C1 frontal stadium 18mm — com RECORTES reais: furo da lente ⌀68 + janela do monitor
+  const camLY = T.camera.cy - cabY;                            // Y local do furo da câmera
   const monLY = (T.monitor.cy + T.monitor.offset_y) - cabY;    // Y local do recorte do monitor
   const c1shape = stadium(T.cabeca.largura, T.cabeca.altura);
   c1shape.holes.push(holeRect(0, monLY, T.monitor.rec_l, T.monitor.rec_a));
+  c1shape.holes.push(holeCircle(0, camLY, T.camera.furo / 2));
   const c1 = piece(
     new THREE.ExtrudeGeometry(c1shape, { depth: 18, bevelEnabled: false }),
     bege, pcInfo('C1')
@@ -479,7 +481,66 @@ function buildPrincipal() {
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
 
-  // (Câmera removida da frente da cabeça a pedido — frente fica limpa, só a tela.)
+  /* === CÂMERA Canon EOS Rebel T7 — aro ⌀95 EMBUTIDO 8 mm + lente ⌀68 (igual ao C1 do corte) === */
+  const aroR = T.camera.aro / 2;              // 47.5 (⌀95)
+  const furoR = T.camera.furo / 2;            // 34   (⌀68)
+  const recessDepth = T.camera.aro_prof;      // 8 mm — rebaixo do aro na face
+  const recessFloor = cabFront - recessDepth; // 82 — fundo do rebaixo
+
+  // Parede do rebaixo do aro (⌀95) — recuada DENTRO da face frontal
+  const aroWall = piece(
+    new THREE.CylinderGeometry(aroR, aroR, recessDepth, 48, 1, true),
+    mat(0xe8dcc6, { roughness: 0.55, side: THREE.DoubleSide }),
+    { cod: 'CAM', nome: 'Câmera Canon EOS Rebel T7', mat: 'Aro ⌀95 embutido 8 mm + lente ⌀68', obs: 'Corpo DSLR fixo no suporte C5 (rosca 1/4"). Aro recuado ' + recessDepth + ' mm na face' }
+  );
+  aroWall.rotation.x = Math.PI / 2;
+  aroWall.position.set(0, T.camera.cy, recessFloor + recessDepth / 2);
+  group.add(aroWall); cabecaItems.push(aroWall);
+
+  // Fundo do rebaixo (placa escura ⌀95)
+  const recessBack = new THREE.Mesh(
+    new THREE.CircleGeometry(aroR, 48),
+    mat(0x1a1a1d, { roughness: 0.6 })
+  );
+  recessBack.position.set(0, T.camera.cy, recessFloor);
+  recessBack.userData = { cod: 'CAM' };
+  group.add(recessBack); cabecaItems.push(recessBack);
+
+  // Lente (vidro escuro ⌀68) no fundo do rebaixo
+  const lensGlass = piece(
+    new THREE.CircleGeometry(furoR, 48),
+    mat(0x0b0d18, { roughness: 0.12, metalness: 0.5 }),
+    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Vidro ⌀68', obs: 'Embutida no aro ⌀95' }
+  );
+  lensGlass.position.set(0, T.camera.cy, recessFloor + 0.4);
+  group.add(lensGlass); cabecaItems.push(lensGlass);
+
+  // C5 suporte da câmera (160×80) — prateleira fixa no C1 com rosca 1/4"
+  const c5 = piece(
+    new THREE.BoxGeometry(160, 15, 80),
+    begeEdge, pcInfo('C5')
+  );
+  c5.position.set(0, T.camera.cy - 52, 8);
+  group.add(c5); cabecaItems.push(c5);
+
+  // Corpo da câmera (DSLR) apoiado no C5, atrás do furo — visível no raio-X
+  const camBody = piece(
+    new THREE.BoxGeometry(140, 100, 75),
+    mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
+    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via parafuso 1/4" UNC no suporte C5' }
+  );
+  camBody.position.set(0, T.camera.cy + 5, 8);
+  group.add(camBody); cabecaItems.push(camBody);
+
+  // Barril da lente — liga o corpo DSLR ao vidro embutido, apontando para o furo ⌀68
+  const lente = piece(
+    new THREE.CylinderGeometry(30, 33, 36, 32),
+    mat(0x0e0e10, { roughness: 0.25, metalness: 0.5 }),
+    { cod: 'CAM', nome: 'Lente Canon EF-S 18-55mm', mat: 'Conjunto óptico', obs: 'Barril interno apontando para o furo ⌀68' }
+  );
+  lente.rotation.x = Math.PI / 2;
+  lente.position.set(0, T.camera.cy, recessFloor - 18);
+  group.add(lente); cabecaItems.push(lente);
 
   /* === PORTA TRASEIRA C2 (basculante) + Mini PC montado nela === */
   const hingeX = -T.cabeca.largura / 2 + 8;     // dobradiça na borda esquerda
