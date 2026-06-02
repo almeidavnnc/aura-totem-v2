@@ -318,10 +318,6 @@
         <button class="chip" id="t3d-portas">Abrir portas (dobradiças)</button>
         <button class="chip" id="t3d-explodir">Vista explodida</button>
         <button class="chip" id="t3d-reset">Reiniciar câmera</button>
-        <span class="chip-sep">Cor:</span>
-        <button class="chip active" id="t3d-cor-bege">Bege</button>
-        <button class="chip" id="t3d-cor-branca">Branca</button>
-        <button class="chip" id="t3d-cor-cinza">Cinza escura</button>
       </div>
 
       <div id="three-container" class="three-container">
@@ -351,11 +347,9 @@
 
       <div class="render-gallery">
         <h3 class="render-title">Render fotorrealista (Blender · Cycles)</h3>
-        <p class="render-sub">Mockup do conjunto nos 3 temas de cor — gerado por <code>render_totem.py</code>.</p>
-        <div class="render-grid">
-          <figure><a href="renders/aura_totem_bege.png" target="_blank" rel="noopener"><img src="renders/aura_totem_bege.png" alt="Totem — tema bege" loading="lazy"></a><figcaption>Bege</figcaption></figure>
-          <figure><a href="renders/aura_totem_branca.png" target="_blank" rel="noopener"><img src="renders/aura_totem_branca.png" alt="Totem — tema branco" loading="lazy"></a><figcaption>Branca</figcaption></figure>
-          <figure><a href="renders/aura_totem_cinza.png" target="_blank" rel="noopener"><img src="renders/aura_totem_cinza.png" alt="Totem — tema cinza escura" loading="lazy"></a><figcaption>Cinza escura</figcaption></figure>
+        <p class="render-sub">Mockup do conjunto — acabamento branco. Gerado por <code>render_totem.py</code>.</p>
+        <div class="render-grid render-grid-1">
+          <figure><a href="renders/aura_totem_branca.png" target="_blank" rel="noopener"><img src="renders/aura_totem_branca.png" alt="Totem — acabamento branco" loading="lazy"></a><figcaption>Acabamento branco</figcaption></figure>
         </div>
       </div>
     </section>
@@ -372,6 +366,7 @@
   <!-- Three.js UMD (v0.146 — última versão com examples/js em UMD; funciona via file://) -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/environments/RoomEnvironment.js"></script>
   <script src="totem-3d.js"></script>
 </body>
 </html>

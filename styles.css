@@ -915,6 +915,10 @@ svg { display: block; }
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
+.render-grid.render-grid-1 {
+  grid-template-columns: minmax(0, 640px);
+  justify-content: center;
+}
 .render-grid figure { margin: 0; }
 .render-grid img {
   width: 100%;

@@ -17,22 +17,19 @@ let isExploded = false;
 let initialized = false;
 let tooltip, legend, containerEl;
 
-const THEMES = {
-  bege: {
-    base: 0xD4C5B2, baseEdge: 0xC4B5A0, madeira: 0xC4A882, porta: 0xb8956a, haste: 0xa89178,
-    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0xe8e2d6, bg: 0x2a2620
-  },
-  branca: {
-    base: 0xF4F2EE, baseEdge: 0xE2DDD4, madeira: 0xC4A882, porta: 0xE6DFD4, haste: 0xD2CBC0,
-    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0xeceae6, bg: 0x40403f
-  },
-  cinza: {
-    base: 0x3D4045, baseEdge: 0x2E3135, madeira: 0xB89B78, porta: 0x4B4F55, haste: 0x565A60,
-    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0x202023, bg: 0x141416
-  }
+// Acabamento branco (único). Paleta tunada para tone mapping ACES + ambiente refletido.
+const COLORS = {
+  base: 0xEDEAE3,      // branco quente suave (face/MDF pintado)
+  baseEdge: 0xDED9CF,  // bordas/peças secundárias
+  madeira: 0xC9AE86,   // lâmina de madeira (porta/coluna)
+  tela: 0x0d1224,
+  led: 0xFFE7B0,
+  ledHot: 0xFFD98A,
+  porta: 0xDCD7CE,
+  ground: 0xC7C7CC,    // piso de estúdio neutro
+  bg: 0x32333A,        // fundo escuro p/ contraste do branco
+  haste: 0xD8D2C8
 };
-let currentTheme = 'bege';
-let COLORS = { ...THEMES.bege };
 
 /* ============== UTILS ============== */
 
@@ -88,6 +85,30 @@ function roundedFrame(wO, hO, rO, wI, hI, rI) {
   const s = roundedRect(wO, hO, rO);
   s.holes.push(roundedRect(wI, hI, rI));
   return s;
+}
+
+// Furos (Path) para recortar dentro de uma Shape — espelham o plano de corte
+function holeRect(cx, cy, w, h) {
+  const p = new THREE.Path();
+  p.moveTo(cx - w / 2, cy - h / 2);
+  p.lineTo(cx + w / 2, cy - h / 2);
+  p.lineTo(cx + w / 2, cy + h / 2);
+  p.lineTo(cx - w / 2, cy + h / 2);
+  p.closePath();
+  return p;
+}
+function holeCircle(cx, cy, r) {
+  const p = new THREE.Path();
+  p.absarc(cx, cy, r, 0, Math.PI * 2, true);
+  return p;
+}
+
+// Material de tinta PU (MDF laqueado): clearcoat sutil p/ um look mais real
+function paintMat(color) {
+  return new THREE.MeshPhysicalMaterial({
+    color, roughness: 0.5, metalness: 0.0,
+    clearcoat: 0.35, clearcoatRoughness: 0.45
+  });
 }
 
 function findPeca(cod) {
@@ -177,23 +198,43 @@ function initThree() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   if (THREE.SRGBColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
   else if (THREE.sRGBEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
   containerEl.appendChild(renderer.domElement);
 
+  // Ambiente de estúdio refletido (reflexos suaves nas peças) via RoomEnvironment + PMREM
+  try {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const roomEnv = new THREE.RoomEnvironment(renderer);
+    scene.environment = pmrem.fromScene(roomEnv, 0.04).texture;
+  } catch (e) {
+    console.warn('RoomEnvironment indisponível, usando só luzes:', e);
+  }
+
   // Lights
-  scene.add(new THREE.AmbientLight(0xfff4e0, 0.55));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+  // Ambiente hemisférico (gradiente céu/chão) — o environment cuida do resto
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x9aa0a8, 0.6);
+  scene.add(hemi);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+  // Key com sombra suave
+  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
   sun.position.set(1500, 2800, 1800);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   Object.assign(sun.shadow.camera, { left: -2200, right: 2200, top: 2800, bottom: -300, near: 100, far: 7000 });
   sun.shadow.bias = -0.0005;
+  sun.shadow.radius = 6;
   scene.add(sun);
-  const fill = new THREE.DirectionalLight(0xb8a98c, 0.35);
+  // Fill frio + rim traseiro
+  const fill = new THREE.DirectionalLight(0xcdd6e0, 0.6);
   fill.position.set(-1800, 900, -1200);
   scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.5);
+  rim.position.set(-600, 1400, -2200);
+  scene.add(rim);
 
   // Ground
-  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), mat(COLORS.ground, { roughness: 0.95 }));
+  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), mat(COLORS.ground, { roughness: 0.55 }));
   groundMesh.rotation.x = -Math.PI / 2;
   groundMesh.receiveShadow = true;
   scene.add(groundMesh);
@@ -227,10 +268,10 @@ function buildPrincipal() {
   const T = window.PRINCIPAL;
   const group = new THREE.Group();
 
-  const bege = mat(COLORS.base, { roughness: 0.55 });
-  const begeEdge = mat(COLORS.baseEdge, { roughness: 0.6 });
+  const bege = paintMat(COLORS.base);
+  const begeEdge = paintMat(COLORS.baseEdge);
   const hasteMat = mat(COLORS.haste, { roughness: 0.6 });
-  const peleMat = mat(COLORS.base, { roughness: 0.5, side: THREE.DoubleSide });
+  const peleMat = paintMat(COLORS.base); peleMat.side = THREE.DoubleSide;
   const madeiraMat = mat(COLORS.madeira, { roughness: 0.4 });
 
   // Coletores para grupos lógicos (explodir/filtrar)
@@ -239,9 +280,11 @@ function buildPrincipal() {
   const baseItems   = [];
 
   /* === BASE QUADRADA 400×60×400 R80 === */
-  // A1 tampo 18mm
+  // A1 tampo 18mm — com soquete central 120×130 (encaixe da coluna), igual ao plano de corte
+  const a1shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
+  a1shape.holes.push(holeRect(0, 0, T.base.furo_central.l, T.base.furo_central.p));
   const a1 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos), { depth: 18, bevelEnabled: false }),
+    new THREE.ExtrudeGeometry(a1shape, { depth: 18, bevelEnabled: false }),
     bege, pcInfo('A1')
   );
   a1.rotation.x = -Math.PI / 2;
@@ -310,9 +353,14 @@ function buildPrincipal() {
   const cabY = T.cabeca.y_inicio + T.cabeca.altura / 2;
   const cabFront = T.cabeca.profundidade / 2;  // +90
 
-  // C1 frontal stadium 18mm
+  // C1 frontal stadium 18mm — com RECORTES reais: furo da lente ⌀68 + janela do monitor
+  const camLY = T.camera.cy - cabY;                            // Y local do furo da câmera
+  const monLY = (T.monitor.cy + T.monitor.offset_y) - cabY;    // Y local do recorte do monitor
+  const c1shape = stadium(T.cabeca.largura, T.cabeca.altura);
+  c1shape.holes.push(holeRect(0, monLY, T.monitor.rec_l, T.monitor.rec_a));
+  c1shape.holes.push(holeCircle(0, camLY, T.camera.furo / 2));
   const c1 = piece(
-    new THREE.ExtrudeGeometry(stadium(T.cabeca.largura, T.cabeca.altura), { depth: 18, bevelEnabled: false }),
+    new THREE.ExtrudeGeometry(c1shape, { depth: 18, bevelEnabled: false }),
     bege, pcInfo('C1')
   );
   c1.position.set(0, cabY, cabFront - 18);
@@ -384,24 +432,19 @@ function buildPrincipal() {
     });
   }
 
-  // LED perimetral (faixa + máscara)
+  // LED perimetral — anel FINO emissivo (largura do canal, a 18 mm da borda)
   const ofs = T.cabeca.led_canal.offset_borda;
   const cw  = T.cabeca.led_canal.largura;
   const ledRing = new THREE.Mesh(
-    new THREE.ShapeGeometry(stadium(T.cabeca.largura - ofs * 2, T.cabeca.altura - ofs * 2)),
-    emissiveMat(COLORS.led, 1.2)
+    new THREE.ShapeGeometry(stadiumFrame(
+      T.cabeca.largura - ofs * 2, T.cabeca.altura - ofs * 2,
+      T.cabeca.largura - (ofs + cw) * 2, T.cabeca.altura - (ofs + cw) * 2)),
+    emissiveMat(COLORS.led, 1.4)
   );
-  ledRing.position.set(0, cabY, cabFront + 0.5);
+  ledRing.position.set(0, cabY, cabFront + 0.3);
   ledRing.userData = { cod: 'LED-Cab', nome: 'LED perimetral da cabeça', mat: 'Fita LED COB 24V 3000K', obs: 'A 18 mm da borda, ~1444 mm de perímetro' };
   pieces.push(ledRing); leds.push(ledRing);
   group.add(ledRing); cabecaItems.push(ledRing);
-
-  const ledMask = new THREE.Mesh(
-    new THREE.ShapeGeometry(stadium(T.cabeca.largura - (ofs + cw) * 2, T.cabeca.altura - (ofs + cw) * 2)),
-    bege
-  );
-  ledMask.position.set(0, cabY, cabFront + 1.0);
-  group.add(ledMask); cabecaItems.push(ledMask);
 
   /* === MONITOR (corpo + tela visível) === */
   // Corpo físico do monitor (caixa atrás do painel frontal) — visível no raio-X
@@ -410,7 +453,7 @@ function buildPrincipal() {
     mat(0x1a1a1e, { roughness: 0.5, metalness: 0.3 }),
     { cod: 'MON', nome: 'Monitor Touch 15.6" (em pé)', mat: 'Moldura ' + T.monitor.moldura_l + '×' + T.monitor.moldura_a, l: T.monitor.moldura_l, a: T.monitor.moldura_a, obs: 'LCD 15.6" touchscreen montado em pé · recuo 3 mm + rebaixo 4 mm' }
   );
-  monBody.position.set(0, T.monitor.cy, cabFront - 16);
+  monBody.position.set(0, T.monitor.cy, cabFront - 20);
   group.add(monBody); cabecaItems.push(monBody);
 
   // Tela visível (área ativa) na frente, deslocada p/ cima pela regulagem
@@ -421,7 +464,7 @@ function buildPrincipal() {
       roughness: 0.2, metalness: 0.05
     })
   );
-  mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront + 1.5);
+  mon.position.set(0, T.monitor.cy + T.monitor.offset_y, cabFront - 4);  // recuada no recorte (recuo ~3 mm)
   mon.userData = { cod: 'MON', nome: 'Tela visível 15.6"', mat: 'Área ativa ' + T.monitor.rec_l + '×' + T.monitor.rec_a, l: T.monitor.rec_l, a: T.monitor.rec_a, obs: 'Recorte deslocado ' + T.monitor.offset_y + ' mm p/ cima (borda inferior mais grossa)' };
   pieces.push(mon);
   group.add(mon); cabecaItems.push(mon);
@@ -533,15 +576,17 @@ function buildImpressora() {
   const T = window.IMPRESSORA;
   const group = new THREE.Group();
 
-  const bege = mat(COLORS.base, { roughness: 0.55 });
-  const begeEdge = mat(COLORS.baseEdge, { roughness: 0.6 });
+  const bege = paintMat(COLORS.base);
+  const begeEdge = paintMat(COLORS.baseEdge);
   const madeiraMat = mat(COLORS.madeira, { roughness: 0.4 });
 
   const baseItems = [], colunaItems = [], caixaItems = [];
 
   /* === BASE QUADRADA 350×60×350 R80 === */
+  const d1shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
+  d1shape.holes.push(holeRect(0, 0, T.base.furo_central.l, T.base.furo_central.p));
   const d1 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos), { depth: 18, bevelEnabled: false }),
+    new THREE.ExtrudeGeometry(d1shape, { depth: 18, bevelEnabled: false }),
     bege, pcInfo('D1')
   );
   d1.rotation.x = -Math.PI / 2;
@@ -660,16 +705,21 @@ function buildImpressora() {
   const doorPivot = new THREE.Group();
   doorPivot.position.set(ihingeX, caixaCenterY, caixaFront - 18);
 
+  // F1 com RECORTE real do slot de saída da foto (espelha o plano de corte)
+  const f1shape = roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos);
+  f1shape.holes.push(holeRect(0, T.caixa.slot.cy - caixaCenterY, T.caixa.slot.l, T.caixa.slot.a));
   const f1 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), { depth: 18, bevelEnabled: false }),
+    new THREE.ExtrudeGeometry(f1shape, { depth: 18, bevelEnabled: false }),
     bege, pcInfo('F1')
   );
   f1.position.set(-ihingeX, 0, 0);
   f1.userData.isDoor = true;
   doorPivot.add(f1); caixaItems.push(f1);
 
-  // F1-L lâmina madeira (na porta)
-  const f1l = piece(new THREE.BoxGeometry(T.caixa.largura - 20, T.caixa.altura - 20, 1), madeiraMat, pcInfo('F1-L'));
+  // F1-L lâmina madeira (na porta) — com o mesmo recorte do slot
+  const f1lShape = roundedRect(T.caixa.largura - 20, T.caixa.altura - 20, Math.max(4, T.caixa.raio_cantos - 10));
+  f1lShape.holes.push(holeRect(0, T.caixa.slot.cy - caixaCenterY, T.caixa.slot.l, T.caixa.slot.a));
+  const f1l = piece(new THREE.ExtrudeGeometry(f1lShape, { depth: 1, bevelEnabled: false }), madeiraMat, pcInfo('F1-L'));
   f1l.position.set(-ihingeX, 0, 18.5);
   f1l.userData.isDoor = true;
   madeira.push(f1l);
@@ -680,7 +730,7 @@ function buildImpressora() {
     new THREE.PlaneGeometry(T.caixa.slot.l, T.caixa.slot.a),
     mat(0x0e0e10, { roughness: 0.4 })
   );
-  slot.position.set(-ihingeX, T.caixa.slot.cy - caixaCenterY, 19);
+  slot.position.set(-ihingeX, T.caixa.slot.cy - caixaCenterY, 2);
   slot.userData = { cod: 'SLOT', nome: 'Slot de saída da foto', mat: 'Abertura 180×15 mm', obs: 'No painel frontal F1 (porta) — abre junto', isDoor: true };
   pieces.push(slot);
   doorPivot.add(slot); caixaItems.push(slot);
@@ -697,26 +747,6 @@ function buildImpressora() {
   group.position.set(475, 0, 0);
   impressoraGroup = group;
   scene.add(group);
-}
-
-/* ============== TEMA DE CORES ============== */
-
-function applyTheme(name) {
-  if (!THEMES[name] || !scene) return;
-  currentTheme = name;
-  COLORS = { ...THEMES[name] };
-
-  // Fundo, neblina e chão
-  scene.background = new THREE.Color(COLORS.bg);
-  if (scene.fog) scene.fog.color = new THREE.Color(COLORS.bg);
-  if (groundMesh) groundMesh.material.color.set(COLORS.ground);
-
-  // Reconstruir os dois módulos com a nova paleta
-  if (principalGroup) { scene.remove(principalGroup); principalGroup = null; }
-  if (impressoraGroup) { scene.remove(impressoraGroup); impressoraGroup = null; }
-  pieces.length = 0; leds.length = 0; madeira.length = 0;
-  buildPrincipal();
-  buildImpressora();
 }
 
 /* ============== TOOLTIP (RAYCASTER) ============== */
@@ -830,17 +860,6 @@ function setupToolbar() {
     camera.position.set(1900, 1400, 2900);
     controls.target.set(0, 850, 0);
     controls.update();
-  });
-
-  // Temas de cor (Bege / Branca / Cinza escura)
-  const temas = [['t3d-cor-bege', 'bege'], ['t3d-cor-branca', 'branca'], ['t3d-cor-cinza', 'cinza']];
-  const corBtns = temas.map(([id]) => document.getElementById(id));
-  temas.forEach(([id, name], i) => {
-    corBtns[i]?.addEventListener('click', () => {
-      corBtns.forEach(b => b && b.classList.remove('active'));
-      corBtns[i].classList.add('active');
-      applyTheme(name);
-    });
   });
 }
 

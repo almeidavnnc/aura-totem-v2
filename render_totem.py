@@ -2,7 +2,7 @@
 AURA · TOTEM V3 — Render fotorrealista (Blender / Cycles)
 =========================================================
 Reconstrói o totem principal + módulo impressora a partir das medidas da V3 e
-renderiza em PNG com iluminação de estúdio, nos 3 temas de cor (bege/branca/cinza).
+renderiza em PNG com iluminação de estúdio, no acabamento branco.
 
 Uso (headless):
     blender -b -P render_totem.py
@@ -38,11 +38,9 @@ IMPR = dict(
 
 SEP_X = 520  # afastamento em X de cada módulo a partir do centro (mm)
 
-# Paletas (hex sRGB) — espelham THEMES de totem-3d.js
+# Paleta (hex sRGB) — acabamento branco único (espelha COLORS de totem-3d.js)
 THEMES = {
-    "bege":   dict(mdf=0xD4C5B2, edge=0xC4B5A0, wood=0xC4A882, floor=0xE8E2D6, world=0x6b6258),
     "branca": dict(mdf=0xF4F2EE, edge=0xE2DDD4, wood=0xC4A882, floor=0xECEAE6, world=0x8a8a88),
-    "cinza":  dict(mdf=0x26282C, edge=0x1B1D20, wood=0xB89B78, floor=0x1A1A1C, world=0x3a3d42),
 }
 
 # ----------------------------------------------------------------------------
@@ -302,7 +300,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     setup_render_done = False
-    for theme in ("bege", "branca", "cinza"):
+    for theme in ("branca",):
         clear_scene()
         t = THEMES[theme]
         setup_world(t["world"], strength=1.0)
