@@ -23,8 +23,8 @@ const COLORS = {
   baseEdge: 0xDED9CF,  // bordas/peças secundárias
   madeira: 0xC9AE86,   // lâmina de madeira (porta/coluna)
   tela: 0x0d1224,
-  led: 0xFFE7B0,
-  ledHot: 0xFFD98A,
+  led: 0xFFFFFF,       // LED branco
+  ledHot: 0xF4F7FF,    // LED branco (leve frio)
   porta: 0xDCD7CE,
   ground: 0xC7C7CC,    // piso de estúdio neutro
   bg: 0x32333A,        // fundo escuro p/ contraste do branco
@@ -109,6 +109,29 @@ function paintMat(color) {
     color, roughness: 0.5, metalness: 0.0,
     clearcoat: 0.35, clearcoatRoughness: 0.45
   });
+}
+
+// Caixa com arestas ARREDONDADAS (acabamento finalizado) — drop-in p/ BoxGeometry.
+// Centrada na origem. w=X, h=Y, d=Z. bevel = raio do chanfro; cornerR = raio dos cantos no plano.
+function roundedBox(w, h, d, bevel = 3, cornerR) {
+  const b = Math.max(0.4, Math.min(bevel, (Math.min(w, h) / 2) - 0.6, (d / 2) - 0.4));
+  const cr = Math.max(0.4, Math.min((cornerR ?? bevel) - b, (Math.min(w, h) - 2 * b) / 2 - 0.4));
+  const geo = new THREE.ExtrudeGeometry(roundedRect(w - 2 * b, h - 2 * b, cr), {
+    depth: Math.max(0.1, d - 2 * b), bevelEnabled: true,
+    bevelThickness: b, bevelSize: b, bevelSegments: 2, curveSegments: 6
+  });
+  geo.center();
+  return geo;
+}
+
+// Extrusão de uma Shape (aceita furos) com arestas chanfradas, centrada em Z.
+function beveledShape(shape, depth, bevel = 2) {
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: Math.max(0.1, depth - 2 * bevel), bevelEnabled: true,
+    bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 8
+  });
+  geo.center();
+  return geo;
 }
 
 function findPeca(cod) {
@@ -305,23 +328,20 @@ function buildPrincipal() {
   // A2 fundo 18mm — com furo ⌀25 traseiro (passagem de cabo)
   const a2shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
   a2shape.holes.push(holeCircle(0, -(T.base.lado / 2 - 60), T.base.furo_cabo / 2));
-  const a2 = piece(
-    new THREE.ExtrudeGeometry(a2shape, { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('A2')
-  );
+  const a2 = piece(beveledShape(a2shape, 18, 2), bege, pcInfo('A2'));
   a2.rotation.x = -Math.PI / 2;
-  a2.position.y = 18;
+  a2.position.y = 9;   // centro da chapa (geometria centrada)
   group.add(a2); baseItems.push(a2);
 
   // A3a paredes longas (×2): 370 × 24, laterais — ao longo de Z em x = ±192.5
   for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(15, 24, 370), begeEdge, pcInfo('A3a'));
+    const w = piece(roundedBox(15, 24, 370, 2, 4), begeEdge, pcInfo('A3a'));
     w.position.set(i === 0 ? -192.5 : 192.5, 30, 0);
     group.add(w); baseItems.push(w);
   }
   // A3b paredes curtas (×2): 340 × 24, frente/trás — ao longo de X em z = ±192.5 (entre as longas)
   for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(340, 24, 15), begeEdge, pcInfo('A3b'));
+    const w = piece(roundedBox(340, 24, 15, 2, 4), begeEdge, pcInfo('A3b'));
     w.position.set(0, 30, i === 0 ? 192.5 : -192.5);
     group.add(w); baseItems.push(w);
   }
@@ -329,12 +349,9 @@ function buildPrincipal() {
   // A1 tampo 18mm — com soquete central 120×130 (encaixe da coluna), igual ao plano de corte
   const a1shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
   a1shape.holes.push(holeRect(0, 0, T.base.furo_central.l, T.base.furo_central.p));
-  const a1 = piece(
-    new THREE.ExtrudeGeometry(a1shape, { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('A1')
-  );
+  const a1 = piece(beveledShape(a1shape, 18, 2), bege, pcInfo('A1'));
   a1.rotation.x = -Math.PI / 2;
-  a1.position.y = 60;
+  a1.position.y = 51;   // centro da chapa (topo da base em 60)
   group.add(a1); baseItems.push(a1);
 
   /* === COLUNA 120×990×130 === */
@@ -595,31 +612,25 @@ function buildImpressora() {
   /* === BASE QUADRADA 350×60×350 R80 === */
   const d1shape = roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos);
   d1shape.holes.push(holeRect(0, 0, T.base.furo_central.l, T.base.furo_central.p));
-  const d1 = piece(
-    new THREE.ExtrudeGeometry(d1shape, { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('D1')
-  );
+  const d1 = piece(beveledShape(d1shape, 18, 2), bege, pcInfo('D1'));
   d1.rotation.x = -Math.PI / 2;
-  d1.position.y = 60;
+  d1.position.y = 51;   // centro da chapa (topo da base em 60)
   group.add(d1); baseItems.push(d1);
 
-  const d2 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos), { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('D2')
-  );
+  const d2 = piece(beveledShape(roundedRect(T.base.lado, T.base.lado, T.base.raio_cantos), 18, 2), bege, pcInfo('D2'));
   d2.rotation.x = -Math.PI / 2;
-  d2.position.y = 18;
+  d2.position.y = 9;
   group.add(d2); baseItems.push(d2);
 
   // D3a longas (×2): 320 × 24 × 15
   for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(320, 24, 15), begeEdge, pcInfo('D3a'));
+    const w = piece(roundedBox(320, 24, 15, 2, 4), begeEdge, pcInfo('D3a'));
     w.position.set(0, 30, i === 0 ? 167.5 : -167.5);
     group.add(w); baseItems.push(w);
   }
   // D3b curtas (×2): 15 × 24 × 290
   for (let i = 0; i < 2; i++) {
-    const w = piece(new THREE.BoxGeometry(15, 24, 290), begeEdge, pcInfo('D3b'));
+    const w = piece(roundedBox(15, 24, 290, 2, 4), begeEdge, pcInfo('D3b'));
     w.position.set(i === 0 ? 167.5 : -167.5, 30, 0);
     group.add(w); baseItems.push(w);
   }
@@ -665,38 +676,35 @@ function buildImpressora() {
 
   // FE estrutural — quadro R40 VAZADO fixo (recebe a dobradiça do F1)
   const fe = piece(
-    new THREE.ExtrudeGeometry(
-      roundedFrame(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos,
-                   T.caixa.largura - caiF * 2, T.caixa.altura - caiF * 2, 12),
-      { depth: 18, bevelEnabled: false }
-    ),
+    beveledShape(roundedFrame(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos,
+                 T.caixa.largura - caiF * 2, T.caixa.altura - caiF * 2, 12), 18, 2),
     begeEdge, pcInfo('FE')
   );
-  fe.position.set(0, caixaCenterY, caixaFront - 36);
+  fe.position.set(0, caixaCenterY, caixaFront - 27);   // centro (chapa centrada)
   group.add(fe); caixaItems.push(fe);
 
   // F2 traseiro (ventilado) 360×250×15
   const f2 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), { depth: 15, bevelEnabled: false }),
+    beveledShape(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), 15, 2),
     bege, pcInfo('F2')
   );
-  f2.position.set(0, caixaCenterY, -caixaFront);
+  f2.position.set(0, caixaCenterY, -caixaFront + 7.5);  // centro (face traseira em -caixaFront)
   group.add(f2); caixaItems.push(f2);
 
-  // F3 laterais (×2): 15 × 250 × 524
+  // F3 laterais (×2): 15 × 250 × 524 — arestas arredondadas
   for (let i = 0; i < 2; i++) {
-    const f3 = piece(new THREE.BoxGeometry(15, T.caixa.altura, interiorD), bege, pcInfo('F3'));
+    const f3 = piece(roundedBox(15, T.caixa.altura, interiorD, 3, 6), bege, pcInfo('F3'));
     f3.position.set(i === 0 ? -f3x : f3x, caixaCenterY, 0);
     group.add(f3); caixaItems.push(f3);
   }
 
-  // F4 topo 324 × 15 × 524
-  const f4 = piece(new THREE.BoxGeometry(T.caixa.largura - 36, 15, interiorD), bege, pcInfo('F4'));
+  // F4 topo 324 × 15 × 524 — arestas arredondadas
+  const f4 = piece(roundedBox(T.caixa.largura - 36, 15, interiorD, 3, 6), bege, pcInfo('F4'));
   f4.position.set(0, T.caixa.y_fim - 7.5, 0);
   group.add(f4); caixaItems.push(f4);
 
-  // F5 fundo 324 × 15 × 524
-  const f5 = piece(new THREE.BoxGeometry(T.caixa.largura - 36, 15, interiorD), bege, pcInfo('F5'));
+  // F5 fundo 324 × 15 × 524 — arestas arredondadas
+  const f5 = piece(roundedBox(T.caixa.largura - 36, 15, interiorD, 3, 6), bege, pcInfo('F5'));
   f5.position.set(0, T.caixa.y_inicio + 7.5, 0);
   group.add(f5); caixaItems.push(f5);
 
@@ -718,11 +726,8 @@ function buildImpressora() {
   // F1 com RECORTE real do slot de saída da foto (espelha o plano de corte)
   const f1shape = roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos);
   f1shape.holes.push(holeRect(0, T.caixa.slot.cy - caixaCenterY, T.caixa.slot.l, T.caixa.slot.a));
-  const f1 = piece(
-    new THREE.ExtrudeGeometry(f1shape, { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('F1')
-  );
-  f1.position.set(-ihingeX, 0, 0);
+  const f1 = piece(beveledShape(f1shape, 18, 2), bege, pcInfo('F1'));
+  f1.position.set(-ihingeX, 0, 9);   // centro da chapa (geometria centrada; era face 0→18)
   f1.userData.isDoor = true;
   doorPivot.add(f1); caixaItems.push(f1);
 
