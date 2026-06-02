@@ -71,6 +71,20 @@ function stadium(w, h) {
   return s;
 }
 
+// Stadium externo com janela stadium interna vazada (quadro estrutural CE)
+function stadiumFrame(wO, hO, wI, hI) {
+  const s = stadium(wO, hO);
+  s.holes.push(stadium(wI, hI));
+  return s;
+}
+
+// Retângulo arredondado com janela interna vazada (quadro estrutural FE)
+function roundedFrame(wO, hO, rO, wI, hI, rI) {
+  const s = roundedRect(wO, hO, rO);
+  s.holes.push(roundedRect(wI, hI, rI));
+  return s;
+}
+
 function findPeca(cod) {
   const all = [...(window.PECAS_PRINCIPAL || []), ...(window.PECAS_IMPRESSORA || [])];
   return all.find(p => p.cod === cod);
@@ -95,6 +109,39 @@ function piece(geometry, material, info, opts = {}) {
   mesh.userData = info || {};
   if (info && info.cod) pieces.push(mesh);
   return mesh;
+}
+
+/* Flanges de união (G1/G2/G3) + duto de cabos vertical escondido.
+   structItems: recebe os flanges (entram no raio-X). O cabo fica fora da lista
+   para permanecer opaco e aparecer quando os painéis ficam transparentes. */
+function addFlangesECabo(group, structItems, p) {
+  const fmat = mat(0xC9BBA6, { roughness: 0.6 });
+
+  // Duto de cabos (do topo da base até o centro da cabeça/caixa)
+  const caboH = p.yHeadCenter - p.yBaseTop;
+  const cabo = new THREE.Mesh(
+    new THREE.BoxGeometry(14, caboH, 14),
+    mat(0xcc6a2a, { roughness: 0.5, emissive: 0x2e1505, emissiveIntensity: 0.25 })
+  );
+  cabo.position.set(0, (p.yBaseTop + p.yHeadCenter) / 2, 0);
+  cabo.userData = { cod: 'CABO', nome: 'Duto de cabos (escondido)', mat: 'HDMI + USB + 220V', obs: 'Desce pelo canal 60×60 da coluna, pelos furos ⌀30 dos flanges, e sai pela base (⌀25)' };
+  pieces.push(cabo);
+  group.add(cabo);
+
+  // G1 base ↔ coluna
+  const g1 = piece(new THREE.BoxGeometry(150, 8, 140), fmat, pcInfo('G1'));
+  g1.position.set(0, p.yBaseTop + 4, 0);
+  group.add(g1); structItems.push(g1);
+
+  // G2 topo da coluna
+  const g2 = piece(new THREE.BoxGeometry(150, 8, 140), fmat, pcInfo('G2'));
+  g2.position.set(0, p.yColTop - 4, 0);
+  group.add(g2); structItems.push(g2);
+
+  // G3 base da cabeça/caixa (placa de transição)
+  const g3 = piece(new THREE.BoxGeometry(p.g3w, 8, 150), fmat, pcInfo('G3'));
+  g3.position.set(0, p.yColTop + 8, 0);
+  group.add(g3); structItems.push(g3);
 }
 
 /* ============== INIT ============== */
@@ -266,30 +313,36 @@ function buildPrincipal() {
   c1.position.set(0, cabY, cabFront - 18);
   group.add(c1); cabecaItems.push(c1);
 
-  // C2 traseiro stadium 15mm
-  const c2 = piece(
-    new THREE.ExtrudeGeometry(stadium(T.cabeca.largura, T.cabeca.altura), { depth: 15, bevelEnabled: false }),
-    bege, pcInfo('C2')
+  // CE estrutural — quadro stadium VAZADO (osso da cabeça), fixo.
+  // A janela interna deixa o corpo da câmera e o chicote de cabos atravessarem.
+  const caiC = T.cabeca.caixilho || 40;
+  const ce = piece(
+    new THREE.ExtrudeGeometry(
+      stadiumFrame(T.cabeca.largura, T.cabeca.altura, T.cabeca.largura - caiC * 2, T.cabeca.altura - caiC * 2),
+      { depth: 18, bevelEnabled: false }
+    ),
+    begeEdge, pcInfo('CE')
   );
-  c2.position.set(0, cabY, -cabFront);
-  group.add(c2); cabecaItems.push(c2);
+  ce.position.set(0, cabY, -9);
+  group.add(ce); cabecaItems.push(ce);
 
-  // Hastes H1-H5 (15 × 40 × hLen onde hLen = 180-18-15 = 147; tooltip mostra 144)
-  const hLen = T.cabeca.profundidade - 18 - 15;
-  const hX = T.cabeca.largura / 2 - 30; // 130
+  // Hastes H1-H5 — espaçadores ligando o C1 (z=72) ao CE estrutural (z=9)
+  const hLen = 63;            // 72 (face interna C1) − 9 (face frontal CE)
+  const hZ = 40.5;           // centro do vão C1↔CE
+  const hX = T.cabeca.largura / 2 - 30; // 140
   const hY1 = cabY;
   const hY2 = T.cabeca.y_inicio + 70;
   const hY3 = T.cabeca.y_fim - 70;
   const hConfigs = [
-    { cod: 'H1', pos: [-hX, hY1, 0] },
-    { cod: 'H2', pos: [ hX, hY1, 0] },
-    { cod: 'H3', pos: [-hX, hY2, 0] },
-    { cod: 'H4', pos: [ hX, hY2, 0] },
-    { cod: 'H5', pos: [ 0,  hY3, 0] }
+    { cod: 'H1', pos: [-hX, hY1] },
+    { cod: 'H2', pos: [ hX, hY1] },
+    { cod: 'H3', pos: [-hX, hY2] },
+    { cod: 'H4', pos: [ hX, hY2] },
+    { cod: 'H5', pos: [ 0,  hY3] }
   ];
   hConfigs.forEach(c => {
     const h = piece(new THREE.BoxGeometry(15, 40, hLen), hasteMat, pcInfo(c.cod));
-    h.position.set(...c.pos);
+    h.position.set(c.pos[0], c.pos[1], hZ);
     group.add(h); cabecaItems.push(h);
   });
 
@@ -429,17 +482,40 @@ function buildPrincipal() {
   lente.position.set(0, T.camera.cy, cabFront - 13);
   group.add(lente); cabecaItems.push(lente);
 
-  /* === MINI PC (caixa na traseira interna da cabeça) — visível no raio-X === */
+  /* === PORTA TRASEIRA C2 (basculante) + Mini PC montado nela === */
+  const hingeX = -T.cabeca.largura / 2 + 8;     // dobradiça na borda esquerda
+  const doorPivot = new THREE.Group();
+  doorPivot.position.set(hingeX, cabY, -cabFront);
+
+  // C2 painel traseiro = a PORTA
+  const c2 = piece(
+    new THREE.ExtrudeGeometry(stadium(T.cabeca.largura, T.cabeca.altura), { depth: 15, bevelEnabled: false }),
+    bege, pcInfo('C2')
+  );
+  c2.position.set(-hingeX, 0, 0);   // volta ao centro quando fechada
+  c2.userData.isDoor = true;
+  doorPivot.add(c2); cabecaItems.push(c2);
+
+  // Mini PC montado NA porta (sai junto ao abrir)
   const mp = T.mini_pc;
   const miniPc = piece(
     new THREE.BoxGeometry(mp.l, mp.l, mp.a),
     mat(0x2b2b30, { roughness: 0.5, metalness: 0.35 }),
-    { cod: 'MINIPC', nome: 'Mini PC', mat: 'Caixa ' + mp.l + '×' + mp.p + '×' + mp.a, l: mp.l, a: mp.a, obs: 'Suporte VESA na traseira interna da cabeça. HDMI + USB para o monitor e câmera' }
+    { cod: 'MINIPC', nome: 'Mini PC (na porta traseira C2)', mat: 'Caixa ' + mp.l + '×' + mp.p + '×' + mp.a, l: mp.l, a: mp.a, obs: 'Montado na PORTA traseira C2 — sai junto quando ela abre. HDMI + USB para o monitor e a câmera' }
   );
-  miniPc.position.set(0, mp.cy, -cabFront + 15 + mp.a / 2);
-  group.add(miniPc); cabecaItems.push(miniPc);
+  miniPc.position.set(-hingeX, mp.cy - cabY, 15 + mp.a / 2);
+  miniPc.userData.isDoor = true;
+  doorPivot.add(miniPc); cabecaItems.push(miniPc);
 
-  group.userData = { cabecaItems, colunaItems, baseItems };
+  // marca da dobradiça (eixo vertical)
+  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, T.cabeca.altura * 0.8, 12), mat(0x2a2a2a, { metalness: 0.6, roughness: 0.4 }));
+  doorPivot.add(hinge);
+  group.add(doorPivot);
+
+  /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
+  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: cabY, g3w: T.cabeca.largura });
+
+  group.userData = { cabecaItems, colunaItems, baseItems, doorPivot };
   group.position.set(-475, 0, 0);
   principalGroup = group;
   scene.add(group);
@@ -519,26 +595,26 @@ function buildImpressora() {
   pieces.push(ledCol); leds.push(ledCol);
   group.add(ledCol); colunaItems.push(ledCol);
 
-  /* === CAIXA 320×250×400 R40 === */
-  // Decompor em F1 (frontal 18mm) + F2 (traseiro 15mm) + F3×2 (laterais) + F4 (topo) + F5 (fundo)
+  /* === CAIXA 360×250×560 R40 (DS620A / ASK-400, abre pela FRENTE) === */
   const caixaCenterY = T.caixa.y_inicio + T.caixa.altura / 2;
-  const caixaFront = T.caixa.profundidade / 2;  // +200
+  const caixaFront = T.caixa.profundidade / 2;     // +280
+  const caiF = T.caixa.caixilho || 40;
+  const interiorD = T.caixa.profundidade - 36;      // 524
+  const f3x = T.caixa.largura / 2 - 7.5;            // 172.5
 
-  // F1 frontal 320×250×18 (cantos R40)
-  const f1 = piece(
-    new THREE.ExtrudeGeometry(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), { depth: 18, bevelEnabled: false }),
-    bege, pcInfo('F1')
+  // FE estrutural — quadro R40 VAZADO fixo (recebe a dobradiça do F1)
+  const fe = piece(
+    new THREE.ExtrudeGeometry(
+      roundedFrame(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos,
+                   T.caixa.largura - caiF * 2, T.caixa.altura - caiF * 2, 12),
+      { depth: 18, bevelEnabled: false }
+    ),
+    begeEdge, pcInfo('FE')
   );
-  f1.position.set(0, caixaCenterY, caixaFront - 18);
-  group.add(f1); caixaItems.push(f1);
+  fe.position.set(0, caixaCenterY, caixaFront - 36);
+  group.add(fe); caixaItems.push(fe);
 
-  // F1-L lâmina madeira 320×250×1
-  const f1l = piece(new THREE.BoxGeometry(T.caixa.largura - 20, T.caixa.altura - 20, 1), madeiraMat, pcInfo('F1-L'));
-  f1l.position.set(0, caixaCenterY, caixaFront + 0.5);
-  madeira.push(f1l);
-  group.add(f1l); caixaItems.push(f1l);
-
-  // F2 traseiro 320×250×15
+  // F2 traseiro (ventilado) 360×250×15
   const f2 = piece(
     new THREE.ExtrudeGeometry(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), { depth: 15, bevelEnabled: false }),
     bege, pcInfo('F2')
@@ -546,47 +622,72 @@ function buildImpressora() {
   f2.position.set(0, caixaCenterY, -caixaFront);
   group.add(f2); caixaItems.push(f2);
 
-  // F3 laterais (×2): 15 × 250 × 364
+  // F3 laterais (×2): 15 × 250 × 524
   for (let i = 0; i < 2; i++) {
-    const f3 = piece(new THREE.BoxGeometry(15, T.caixa.altura, 364), bege, pcInfo('F3'));
-    f3.position.set(i === 0 ? -152.5 : 152.5, caixaCenterY, 0);
+    const f3 = piece(new THREE.BoxGeometry(15, T.caixa.altura, interiorD), bege, pcInfo('F3'));
+    f3.position.set(i === 0 ? -f3x : f3x, caixaCenterY, 0);
     group.add(f3); caixaItems.push(f3);
   }
 
-  // F4 topo 284 × 15 × 364
-  const f4 = piece(new THREE.BoxGeometry(284, 15, 364), bege, pcInfo('F4'));
+  // F4 topo 324 × 15 × 524
+  const f4 = piece(new THREE.BoxGeometry(T.caixa.largura - 36, 15, interiorD), bege, pcInfo('F4'));
   f4.position.set(0, T.caixa.y_fim - 7.5, 0);
   group.add(f4); caixaItems.push(f4);
 
-  // F5 fundo 284 × 15 × 364 (com furo central, ignorado no 3D)
-  const f5 = piece(new THREE.BoxGeometry(284, 15, 364), bege, pcInfo('F5'));
+  // F5 fundo 324 × 15 × 524
+  const f5 = piece(new THREE.BoxGeometry(T.caixa.largura - 36, 15, interiorD), bege, pcInfo('F5'));
   f5.position.set(0, T.caixa.y_inicio + 7.5, 0);
   group.add(f5); caixaItems.push(f5);
 
-  // Slot saída foto (visual)
+  // Corpo da impressora DS620A/ASK-400 (275×170×366) — visível no raio-X
+  const U = T.impressora_unit;
+  const impr = piece(
+    new THREE.BoxGeometry(U.l, U.a, U.p),
+    mat(0x26262b, { roughness: 0.5, metalness: 0.3 }),
+    { cod: 'IMPR', nome: 'Impressora DNP DS620A / Fujifilm ASK-400', mat: U.l + '×' + U.p + '×' + U.a + ' mm · ' + U.peso + ' kg', l: U.l, a: U.a, obs: 'Mesma impressora (ASK-400 = DS620A rebatizada). Manutenção FRONTAL pela porta F1. Empurrada p/ frente → folga traseira p/ a passada do papel dye-sub' }
+  );
+  impr.position.set(0, T.caixa.y_inicio + 18 + U.a / 2, 60);
+  group.add(impr); caixaItems.push(impr);
+
+  /* === PORTA FRONTAL F1 (inteira) — gira numa dobradiça lateral === */
+  const ihingeX = -T.caixa.largura / 2 + 8;
+  const doorPivot = new THREE.Group();
+  doorPivot.position.set(ihingeX, caixaCenterY, caixaFront - 18);
+
+  const f1 = piece(
+    new THREE.ExtrudeGeometry(roundedRect(T.caixa.largura, T.caixa.altura, T.caixa.raio_cantos), { depth: 18, bevelEnabled: false }),
+    bege, pcInfo('F1')
+  );
+  f1.position.set(-ihingeX, 0, 0);
+  f1.userData.isDoor = true;
+  doorPivot.add(f1); caixaItems.push(f1);
+
+  // F1-L lâmina madeira (na porta)
+  const f1l = piece(new THREE.BoxGeometry(T.caixa.largura - 20, T.caixa.altura - 20, 1), madeiraMat, pcInfo('F1-L'));
+  f1l.position.set(-ihingeX, 0, 18.5);
+  f1l.userData.isDoor = true;
+  madeira.push(f1l);
+  doorPivot.add(f1l); caixaItems.push(f1l);
+
+  // Slot de saída da foto (no painel F1 / porta)
   const slot = new THREE.Mesh(
     new THREE.PlaneGeometry(T.caixa.slot.l, T.caixa.slot.a),
     mat(0x0e0e10, { roughness: 0.4 })
   );
-  slot.position.set(0, T.caixa.slot.cy, caixaFront + 1.5);
-  slot.userData = { cod: 'SLOT', nome: 'Slot de saída da foto', mat: 'Abertura 180×15 mm', obs: 'Posicionado a ~120 mm do topo da caixa' };
+  slot.position.set(-ihingeX, T.caixa.slot.cy - caixaCenterY, 19);
+  slot.userData = { cod: 'SLOT', nome: 'Slot de saída da foto', mat: 'Abertura 180×15 mm', obs: 'No painel frontal F1 (porta) — abre junto', isDoor: true };
   pieces.push(slot);
-  group.add(slot); caixaItems.push(slot);
+  doorPivot.add(slot); caixaItems.push(slot);
 
-  // Porta frontal magnética 280×220
-  const porta = new THREE.Mesh(
-    new THREE.PlaneGeometry(280, 220),
-    new THREE.MeshStandardMaterial({
-      color: COLORS.porta, roughness: 0.6,
-      transparent: true, opacity: 0.45, side: THREE.DoubleSide
-    })
-  );
-  porta.position.set(0, caixaCenterY, caixaFront + 1);
-  porta.userData = { cod: 'PORTA-F1', nome: 'Porta magnética frontal (F1)', mat: '280×220 mm', obs: 'Imãs neodímio + fechadura push-lock. Acesso à impressora ASK-400' };
-  pieces.push(porta);
-  group.add(porta); caixaItems.push(porta);
+  // marca da dobradiça
+  const ihinge = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, T.caixa.altura * 0.8, 12), mat(0x2a2a2a, { metalness: 0.6, roughness: 0.4 }));
+  doorPivot.add(ihinge);
+  group.add(doorPivot);
 
-  group.userData = { caixaItems, colunaItems, baseItems };
+  /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
+  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: caixaCenterY, g3w: T.caixa.largura - 36 });
+
+  group.userData = { caixaItems, colunaItems, baseItems, doorPivot };
   group.position.set(475, 0, 0);
   impressoraGroup = group;
   scene.add(group);
@@ -665,7 +766,7 @@ function setupToolbar() {
 
   // Raio-X: deixa a casca semi-transparente para ver os componentes internos
   // (monitor, câmera, mini PC). Mantém telas/LEDs/componentes opacos.
-  const INTERNOS = new Set(['MON', 'CAM', 'MINIPC']);
+  const INTERNOS = new Set(['MON', 'CAM', 'MINIPC', 'IMPR', 'CABO']);
   const xrayBtn = document.getElementById('t3d-internos');
   xrayBtn?.addEventListener('click', () => {
     xrayBtn.classList.toggle('active');
@@ -681,6 +782,15 @@ function setupToolbar() {
         m.material.needsUpdate = true;
       });
     });
+  });
+
+  // Abrir portas (dobradiças): C2 traseira do totem + F1 frontal da impressora
+  const portasBtn = document.getElementById('t3d-portas');
+  portasBtn?.addEventListener('click', () => {
+    portasBtn.classList.toggle('active');
+    const open = portasBtn.classList.contains('active');
+    if (principalGroup?.userData.doorPivot)  principalGroup.userData.doorPivot.rotation.y  = open ?  1.9 : 0; // abre p/ trás
+    if (impressoraGroup?.userData.doorPivot) impressoraGroup.userData.doorPivot.rotation.y = open ? -1.9 : 0; // abre p/ frente
   });
 
   const explBtn = document.getElementById('t3d-explodir');
@@ -700,6 +810,7 @@ function setupToolbar() {
 function explode() {
   const apply = (items, off) => {
     items.forEach(m => {
+      if (m.userData.isDoor) return; // peças da porta movem na dobradiça, não na explosão
       if (m.userData.baseY === undefined) m.userData.baseY = m.position.y;
       m.position.y = m.userData.baseY + off;
     });

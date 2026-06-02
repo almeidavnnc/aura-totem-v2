@@ -35,6 +35,7 @@ const PRINCIPAL = {
     y_inicio: 1050,
     y_fim: 1650,
     moldura: 20,
+    caixilho: 40,        // largura da borda do quadro estrutural CE (janela vazada interna)
     led_canal: { largura: 10, prof: 8, offset_borda: 18 }
   },
 
@@ -75,8 +76,10 @@ const PRINCIPAL = {
 
 const IMPRESSORA = {
   altura: 920,
-  modelo: "ASK-400",
+  modelo: "DNP DS620A / Fujifilm ASK-400",
   manutencao: "frontal",
+  // Corpo da impressora (DS620A = ASK-400 rebatizada): mesma carcaça
+  impressora_unit: { l: 275, p: 366, a: 170, peso: 12 },
 
   base: {
     formato: "quadrada",
@@ -98,10 +101,11 @@ const IMPRESSORA = {
   },
 
   caixa: {
-    largura: 320,
+    largura: 360,        // V3: 320 → 360 (corpo 275 + folga p/ ar e cabos)
     altura: 250,
-    profundidade: 400,
+    profundidade: 560,   // V3: 400 → 560 (corpo 366 + ~150 folga traseira do papel dye-sub)
     raio_cantos: 40,
+    caixilho: 40,        // largura da borda do quadro estrutural FE
     y_inicio: 670,
     y_fim: 920,
     slot: { l: 180, a: 15, cy: 800 }
@@ -514,20 +518,23 @@ function renderImpressoraFrontal() {
     fill: "#2d2d2d", stroke: "#000", "stroke-width": 0.8
   }));
 
-  // Porta frontal magnética (F1) - 280×220 centralizada
-  g.appendChild(el("rect", {
-    x: px(cx - 140), y: px(caixaY + 15),
-    width: px(280), height: px(220),
-    fill: "none", stroke: "#9e8a6f", "stroke-width": 0.6, "stroke-dasharray": "3 2"
-  }));
+  // Porta frontal INTEIRA (F1 basculante) — dobradiça à esquerda, trava à direita
+  const cxL = cx - T.caixa.largura / 2;
+  [0.3, 0.7].forEach(fr => {
+    g.appendChild(el("rect", {
+      x: px(cxL + 4), y: px(caixaY + T.caixa.altura * fr - 14),
+      width: px(7), height: px(28), fill: "#8b6f4f"
+    }));
+  });
+  g.appendChild(el("circle", { cx: px(cx + T.caixa.largura / 2 - 14), cy: px(caixaY + T.caixa.altura / 2), r: px(6), fill: "#444" }));
 
   if (config.rotulos) {
     rotulo(g, cx + T.caixa.slot.l / 2 + 6, slotY + 8, "Saída foto", "label-small");
-    rotulo(g, cx - 130, caixaY + 30, "Porta frontal magnética", "label-small");
+    rotulo(g, cxL + 14, caixaY + 30, "Porta frontal INTEIRA", "label-small");
   }
 
   // Cotas
-  cotaH(g, cx - T.caixa.largura / 2, cx + T.caixa.largura / 2, caixaY - 5, "320");
+  cotaH(g, cx - T.caixa.largura / 2, cx + T.caixa.largura / 2, caixaY - 5, String(T.caixa.largura));
   cotaH(g, cx - T.base.lado / 2, cx + T.base.lado / 2, altoT + 5, "350", { dir: -1, offset: 20 });
   cotaV(g, altoT, 0, w, "920", { offset: 25 });
   cotaV(g, altoT - T.caixa.y_inicio, altoT - T.caixa.y_fim, w, "250", { offset: 25 });
@@ -556,14 +563,26 @@ function renderImpressoraLateral() {
     rx: px(T.coluna.raio_cantos), class: "estrutura"
   }));
 
-  // Caixa (mais profunda agora — 400mm)
+  // Caixa (V3: 560 mm de profundidade)
   g.appendChild(el("rect", {
     x: px(cx - T.caixa.profundidade / 2), y: px(altoT - T.caixa.y_fim),
     width: px(T.caixa.profundidade), height: px(T.caixa.altura),
     rx: px(T.caixa.raio_cantos), class: "estrutura"
   }));
 
-  cotaH(g, cx - T.caixa.profundidade / 2, cx + T.caixa.profundidade / 2, altoT - T.caixa.y_fim - 8, "400");
+  // Corpo da impressora DS620A/ASK-400 (366 prof × 170 alt) embutido + folga traseira
+  if (config.internos) {
+    const U = T.impressora_unit;
+    g.appendChild(el("rect", {
+      x: px(cx - T.caixa.profundidade / 2 + 18), y: px(altoT - T.caixa.y_inicio - 18 - U.a),
+      width: px(U.p), height: px(U.a),
+      class: "componente"
+    }));
+    rotulo(g, cx - T.caixa.profundidade / 2 + 24, altoT - T.caixa.y_inicio - 28, "DS620A/ASK-400", "label-small");
+    rotulo(g, cx - T.caixa.profundidade / 2 - 18, altoT - T.caixa.y_fim + 18, "FRENTE →", "label-small");
+  }
+
+  cotaH(g, cx - T.caixa.profundidade / 2, cx + T.caixa.profundidade / 2, altoT - T.caixa.y_fim - 8, String(T.caixa.profundidade));
   cotaH(g, cx - T.coluna.profundidade / 2, cx + T.coluna.profundidade / 2, altoT - T.coluna.y_inicio + 10, "120", { dir: -1, offset: 20 });
   cotaV(g, altoT, 0, w, "920", { offset: 20 });
 }
@@ -686,16 +705,20 @@ const PECAS_PRINCIPAL = [
   { cod: "B1-L", nome: "Lâmina madeira frontal", mat: "Lâmina 0.6 mm", esp: 0.6, l: 120, a: 990, qtd: 1, obs: "Carvalho/freijó natural. Colar antes de fresar canaleta", desenha: dRetSimples },
   { cod: "B2", nome: "Traseiro coluna", mat: "MDF 15 mm", esp: 15, l: 120, a: 990, qtd: 1, obs: "Removível - parafusos M4 (acesso manutenção)", desenha: dRetSimples },
   { cod: "B3", nome: "Laterais coluna", mat: "MDF 15 mm", esp: 15, l: 100, a: 990, qtd: 2, obs: "Largura = 130 − 2×15 = 100 mm (coluna 130 mm de profundidade)", desenha: dRetSimples },
-  { cod: "C1", nome: "Frontal cabeça", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Furo lente ⌀68 + rebaixo aro ⌀95×8 prof (centro 80 mm do topo). Monitor 15.6\" EM PÉ: rebaixo da moldura 220×360×4 prof + recorte da tela visível 194×345 deslocado 6 mm p/ cima (regulagem da borda inferior). Canal LED perimetral 10×8 a 18 mm da borda", desenha: dCabecaFrontal },
-  { cod: "C2", nome: "Traseiro cabeça", mat: "MDF 15 mm", esp: 15, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Porta magnética 270×490 incluída (imãs + fechadura)", desenha: dCabecaTraseira },
+  { cod: "C1", nome: "Frontal cabeça (FIXO)", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170 FIXO (não abre — mantém o enquadramento). Carrega câmera + tela + LED. Furo lente ⌀68 + rebaixo aro ⌀95×8 (centro 80 mm do topo). Monitor 15.6\" EM PÉ: rebaixo moldura 220×360×4 + recorte tela 194×345 deslocado 6 mm p/ cima. Canal LED perimetral 10×8 a 18 mm da borda", desenha: dCabecaFrontal },
+  { cod: "CE", nome: "Estrutural cabeça (quadro vazado)", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "OSSO da cabeça. Stadium 340×600 R170 VAZADO (janela interna 260×520, caixilho 40 mm). Fixa o C1 na frente, recebe a dobradiça da porta traseira C2 e parafusa no flange G3 (topo da coluna)", desenha: dCabecaEstrutural },
+  { cod: "C2", nome: "Traseiro cabeça (PORTA basculante)", mat: "MDF 15 mm", esp: 15, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Abre PELA TRASEIRA numa dobradiça lateral fixada no CE. O Mini PC fica montado nela (sai junto ao abrir). Lado oposto: fecho magnético + trava", desenha: dCabecaTraseira },
   { cod: "C3-P", nome: "Pele lateral cabeça", mat: "MDF flex 3 mm", esp: 3, l: 1588, a: 180, qtd: 1, obs: "Perímetro stadium 340×600 R170 = ~1588 mm × 180 mm altura. Cola PVA + grampos finos", desenha: dTira },
-  { cod: "H1", nome: "Haste lateral esquerda", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — conecta C1 a C2 (144 = 180 prof − 2×18)", desenha: dRetSimples },
-  { cod: "H2", nome: "Haste lateral direita", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — conecta C1 a C2", desenha: dRetSimples },
-  { cod: "H3", nome: "Haste inferior esquerda", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — reforço inferior", desenha: dRetSimples },
-  { cod: "H4", nome: "Haste inferior direita", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — reforço inferior", desenha: dRetSimples },
-  { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 144, a: 40, qtd: 1, obs: "Estrutural — topo do arco stadium", desenha: dRetSimples },
-  { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais (1 acima + 1 abaixo da moldura do monitor de 360 mm de altura)", desenha: dRetSimples },
-  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Furo central rosca 1/4\" para fixar Canon EOS Rebel T7", desenha: dSuporteCamera }
+  { cod: "H1", nome: "Haste lateral esquerda", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (90 = distância frontal-estrutural)", desenha: dRetSimples },
+  { cod: "H2", nome: "Haste lateral direita", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE", desenha: dRetSimples },
+  { cod: "H3", nome: "Haste inferior esquerda", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (reforço inferior)", desenha: dRetSimples },
+  { cod: "H4", nome: "Haste inferior direita", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (reforço inferior)", desenha: dRetSimples },
+  { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (topo do arco stadium)", desenha: dRetSimples },
+  { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais no C1 (1 acima + 1 abaixo da moldura do monitor)", desenha: dRetSimples },
+  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Fixo no C1. Furo central rosca 1/4\" para a Canon EOS Rebel T7 (câmera acompanha o C1 fixo)", desenha: dSuporteCamera },
+  { cod: "G1", nome: "Flange base ↔ coluna", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Quadro de união interno. Centra a coluna no soquete 120×130 da base. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
+  { cod: "G2", nome: "Flange topo da coluna", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Placa-tampa do topo da coluna. Furo passa-cabo ⌀30 + 4 insertos M6 (casa com G3)", desenha: dFlangeCabo },
+  { cod: "G3", nome: "Flange base cabeça (transição)", mat: "MDF 18 mm", esp: 18, l: 340, a: 150, qtd: 1, obs: "Placa de transição retângulo (coluna 120×130) → caixilho stadium da cabeça. Furo passa-cabo ⌀30 + 4× M6 prendem a cabeça na coluna", desenha: dFlangeCabo }
 ];
 
 const PECAS_IMPRESSORA = [
@@ -707,12 +730,16 @@ const PECAS_IMPRESSORA = [
   { cod: "E1-L", nome: "Lâmina madeira coluna impr.", mat: "Lâmina 0.6 mm", esp: 0.6, l: 120, a: 610, qtd: 1, obs: "Carvalho/freijó", desenha: dRetSimples },
   { cod: "E2", nome: "Traseiro coluna impr.", mat: "MDF 15 mm", esp: 15, l: 120, a: 610, qtd: 1, obs: "Removível", desenha: dRetSimples },
   { cod: "E3", nome: "Laterais coluna impr.", mat: "MDF 15 mm", esp: 15, l: 90, a: 610, qtd: 2, obs: "Largura = 120 − 2×15 = 90 mm", desenha: dRetSimples },
-  { cod: "F1", nome: "Frontal caixa impr.", mat: "MDF 18 mm", esp: 18, l: 320, a: 250, qtd: 1, obs: "Cantos R40 + slot 180×15 + porta magnética 280×220 (frontal, manutenção da ASK-400)", desenha: dCaixaFrontal },
-  { cod: "F1-L", nome: "Lâmina madeira caixa", mat: "Lâmina 0.6 mm", esp: 0.6, l: 320, a: 250, qtd: 1, obs: "Mesmo recorte do slot + porta", desenha: dRetSimples },
-  { cod: "F2", nome: "Traseiro caixa impr.", mat: "MDF 15 mm", esp: 15, l: 320, a: 250, qtd: 1, obs: "Cantos R40. Porta magnética 240×280 (imãs + fechadura)", desenha: dCantoArredondado },
-  { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 364, a: 250, qtd: 2, obs: "Profundidade interna = 400 − 18 − 18 = 364 mm. Cantos R40 nas bordas", desenha: dRetSimples },
-  { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 284, a: 364, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (284 = 320 − 2×18)", desenha: dRetSimples },
-  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 284, a: 364, qtd: 1, obs: "Furo central 120×120 (encaixe coluna)", desenha: dRetFuro }
+  { cod: "F1", nome: "Frontal caixa (PORTA basculante)", mat: "MDF 18 mm", esp: 18, l: 360, a: 250, qtd: 1, obs: "Cantos R40. PAINEL FRONTAL INTEIRO abre numa dobradiça lateral (gira no FE). Mantém o slot da foto 180×15. Acesso frontal total à impressora DS620A/ASK-400", desenha: dCaixaFrontal },
+  { cod: "F1-L", nome: "Lâmina madeira caixa", mat: "Lâmina 0.6 mm", esp: 0.6, l: 360, a: 250, qtd: 1, obs: "Mesmo recorte do slot. Colada no F1 (porta)", desenha: dRetSimples },
+  { cod: "FE", nome: "Estrutural caixa (quadro vazado)", mat: "MDF 18 mm", esp: 18, l: 360, a: 250, qtd: 1, obs: "Quadro R40 VAZADO (caixilho 40 mm) fixo na caixa. Recebe a dobradiça do F1 e a trava. Equivalente ao CE da cabeça", desenha: dCaixaEstrutural },
+  { cod: "F2", nome: "Traseiro caixa (ventilado)", mat: "MDF 15 mm", esp: 15, l: 360, a: 250, qtd: 1, obs: "Cantos R40. Grelha de ventilação + folga p/ a passada do papel dye-sub. Removível (imãs + fechadura)", desenha: dCaixaTraseiraVent },
+  { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 524, a: 250, qtd: 2, obs: "Profundidade interna = 560 − 18 − 18 = 524 mm. Cantos R40 nas bordas", desenha: dRetSimples },
+  { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 524, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (324 = 360 − 2×18)", desenha: dRetSimples },
+  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 524, qtd: 1, obs: "Furo central 120×120 (encaixe coluna) + furo passa-cabo", desenha: dRetFuro },
+  { cod: "G1", nome: "Flange base ↔ coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Centra a coluna no soquete 120×120 da base. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
+  { cod: "G2", nome: "Flange topo da coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Placa-tampa. Furo passa-cabo ⌀30 + 4 insertos M6 (casa com G3)", desenha: dFlangeCabo },
+  { cod: "G3", nome: "Flange base caixa (transição)", mat: "MDF 18 mm", esp: 18, l: 324, a: 150, qtd: 1, obs: "Placa de transição coluna → fundo da caixa. Furo passa-cabo ⌀30 + 4× M6", desenha: dFlangeCabo }
 ];
 
 /* ===== DESENHOS DAS PEÇAS ===== */
@@ -953,22 +980,23 @@ function dSuporteCamera(g, p, esc) {
 }
 
 function dCaixaFrontal(g, p, esc) {
-  // F1: retângulo 320×250 com cantos R40 + slot 180×15 + porta frontal 280×220 (manutenção ASK-400)
+  // F1: PORTA basculante inteira (360×250 R40). Dobradiça à esquerda, trava à direita + slot
   g.appendChild(el("rect", {
     x: 0, y: 0, width: p.l * esc, height: p.a * esc,
     rx: 40 * esc, ry: 40 * esc,
     class: "estrutura"
   }));
 
-  // Porta frontal magnética 280×220 centralizada
-  const portaW = 280, portaH = 220;
-  const portaX = (p.l - portaW) / 2;
-  const portaY = (p.a - portaH) / 2;
-  g.appendChild(el("rect", {
-    x: portaX * esc, y: portaY * esc,
-    width: portaW * esc, height: portaH * esc,
-    fill: "none", stroke: "#8b6f4f", "stroke-width": 0.8, "stroke-dasharray": "4 3"
-  }));
+  // Dobradiça (lado esquerdo) — marcas
+  [0.28, 0.72].forEach(fr => {
+    g.appendChild(el("rect", {
+      x: 2 * esc, y: (p.a * fr - 14) * esc,
+      width: 8 * esc, height: 28 * esc,
+      fill: "#8b6f4f", stroke: "#5c4a32", "stroke-width": 0.6
+    }));
+  });
+  // Trava (lado direito) — marca
+  g.appendChild(el("circle", { cx: (p.l - 14) * esc, cy: (p.a / 2) * esc, r: 6 * esc, fill: "#444" }));
 
   // Slot saída ~120mm do topo
   const slotW = 180, slotH = 15;
@@ -983,10 +1011,9 @@ function dCaixaFrontal(g, p, esc) {
   const t = el("text", { x: p.l * esc / 2, y: (slotY - 4) * esc, "text-anchor": "middle", class: "cota-texto" });
   t.textContent = "Slot 180×15";
   g.appendChild(t);
-  const t2 = el("text", { x: p.l * esc / 2, y: (portaY + portaH + 12) * esc, "text-anchor": "middle", class: "cota-texto" });
-  t2.textContent = "Porta frontal 280×220 (manutenção ASK-400)";
+  const t2 = el("text", { x: p.l * esc / 2, y: (p.a / 2 + 30) * esc, "text-anchor": "middle", class: "cota-texto" });
+  t2.textContent = "Porta frontal INTEIRA (dobradiça ←, trava →)";
   g.appendChild(t2);
-  cotaVCanvas(g, 0, slotY, -10, esc, String(slotY), -1);
 }
 
 function dCantoArredondado(g, p, esc) {
@@ -995,6 +1022,90 @@ function dCantoArredondado(g, p, esc) {
     rx: 40 * esc, ry: 40 * esc,
     class: "estrutura"
   }));
+}
+
+/* === V3: quadro estrutural da cabeça (CE) — stadium vazado === */
+function dCabecaEstrutural(g, p, esc) {
+  const cx = p.l / 2, cy = p.a / 2;
+  const cai = PRINCIPAL.cabeca.caixilho; // 40
+  // Contorno externo stadium
+  g.appendChild(el("path", { d: stadiumPath(cx * esc, cy * esc, p.l * esc, p.a * esc), class: "estrutura" }));
+  // Janela interna vazada (stadium menor) — recorte
+  g.appendChild(el("path", {
+    d: stadiumPath(cx * esc, cy * esc, (p.l - cai * 2) * esc, (p.a - cai * 2) * esc),
+    fill: "#efe7d8", stroke: "#bda687", "stroke-width": 0.8, "stroke-dasharray": "4 3"
+  }));
+  // Marca de dobradiça (esquerda) e trava (direita) no caixilho
+  [-1, 1].forEach(s => {
+    g.appendChild(el("rect", {
+      x: (cx + s * (p.l / 2 - cai / 2) - 4) * esc, y: (cy - 16) * esc,
+      width: 8 * esc, height: 32 * esc, fill: "#8b6f4f"
+    }));
+  });
+  const t = el("text", { x: cx * esc, y: cy * esc + 4, "text-anchor": "middle", class: "cota-texto" });
+  t.textContent = "janela " + (p.l - cai * 2) + "×" + (p.a - cai * 2);
+  g.appendChild(t);
+  const t2 = el("text", { x: cx * esc, y: (cy + 16) * esc, "text-anchor": "middle", class: "label-small" });
+  t2.textContent = "caixilho " + cai + " mm · dobradiça ↔ trava";
+  g.appendChild(t2);
+}
+
+/* === V3: quadro estrutural da caixa (FE) — retângulo R40 vazado === */
+function dCaixaEstrutural(g, p, esc) {
+  const cai = IMPRESSORA.caixa.caixilho; // 40
+  g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, rx: 40 * esc, ry: 40 * esc, class: "estrutura" }));
+  g.appendChild(el("rect", {
+    x: cai * esc, y: cai * esc, width: (p.l - cai * 2) * esc, height: (p.a - cai * 2) * esc,
+    rx: 12 * esc, ry: 12 * esc, fill: "#efe7d8", stroke: "#bda687", "stroke-width": 0.8, "stroke-dasharray": "4 3"
+  }));
+  // dobradiça (esq) + trava (dir)
+  [0.3, 0.7].forEach(fr => g.appendChild(el("rect", { x: (cai / 2 - 4) * esc, y: (p.a * fr - 14) * esc, width: 8 * esc, height: 28 * esc, fill: "#8b6f4f" })));
+  g.appendChild(el("circle", { cx: (p.l - cai / 2) * esc, cy: (p.a / 2) * esc, r: 6 * esc, fill: "#444" }));
+  const t = el("text", { x: p.l * esc / 2, y: p.a * esc / 2 + 4, "text-anchor": "middle", class: "cota-texto" });
+  t.textContent = "janela " + (p.l - cai * 2) + "×" + (p.a - cai * 2);
+  g.appendChild(t);
+}
+
+/* === V3: traseira ventilada da caixa (F2) — grelha === */
+function dCaixaTraseiraVent(g, p, esc) {
+  g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, rx: 40 * esc, ry: 40 * esc, class: "estrutura" }));
+  // Grelha de ventilação central
+  const gw = p.l - 120, gh = p.a - 90;
+  const gx = (p.l - gw) / 2, gy = (p.a - gh) / 2;
+  const n = 7;
+  for (let i = 0; i < n; i++) {
+    const yy = gy + (gh / (n - 1)) * i;
+    g.appendChild(el("line", { x1: gx * esc, y1: yy * esc, x2: (gx + gw) * esc, y2: yy * esc, stroke: "#8b6f4f", "stroke-width": 1.2 }));
+  }
+  const t = el("text", { x: p.l * esc / 2, y: (gy + gh + 14) * esc, "text-anchor": "middle", class: "label-small" });
+  t.textContent = "grelha ventilação + folga papel";
+  g.appendChild(t);
+}
+
+/* === V3: flanges de união entre módulos === */
+function dFlangeUniao(g, p, esc) {
+  g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, class: "estrutura" }));
+  // soquete central (encaixe da coluna)
+  const sw = 120, sh = 130;
+  g.appendChild(el("rect", { x: ((p.l - sw) / 2) * esc, y: ((p.a - sh) / 2) * esc, width: sw * esc, height: sh * esc, class: "recorte" }));
+  // 4 furos de parafuso-conector M6
+  [[18, 18], [p.l - 18, 18], [18, p.a - 18], [p.l - 18, p.a - 18]].forEach(([ix, iy]) =>
+    g.appendChild(el("circle", { cx: ix * esc, cy: iy * esc, r: 4 * esc, fill: "#444" })));
+  const t = el("text", { x: p.l * esc / 2, y: p.a * esc / 2 + 4, "text-anchor": "middle", class: "label-small" });
+  t.textContent = "soquete + 4× M6";
+  g.appendChild(t);
+}
+
+function dFlangeCabo(g, p, esc) {
+  g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, class: "estrutura" }));
+  // furo passa-cabo ⌀30 central
+  g.appendChild(el("circle", { cx: (p.l / 2) * esc, cy: (p.a / 2) * esc, r: 15 * esc, class: "recorte" }));
+  // 4 insertos M6
+  [[18, 18], [p.l - 18, 18], [18, p.a - 18], [p.l - 18, p.a - 18]].forEach(([ix, iy]) =>
+    g.appendChild(el("circle", { cx: ix * esc, cy: iy * esc, r: 4 * esc, fill: "#444" })));
+  const t = el("text", { x: p.l * esc / 2, y: (p.a / 2 + 28) * esc, "text-anchor": "middle", class: "label-small" });
+  t.textContent = "⌀30 passa-cabo + 4× M6";
+  g.appendChild(t);
 }
 
 /* ===== Render peças ===== */
@@ -1085,7 +1196,7 @@ function renderListas() {
    ============================================================ */
 
 const ETAPAS = [
-  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V2 (módulo principal: 18 MDF + 1 lâmina; módulo impressora: 14 MDF + 2 lâminas). Identificar com fita-crepe e caneta." },
+  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V3 (inclui os novos quadros estruturais CE/FE, os flanges de união G1–G3 e a caixa da impressora redimensionada). Identificar com fita-crepe e caneta." },
   { titulo: "Acabamento (ANTES da montagem)", meta: "1-2 dias", desc: "É muito mais fácil laquear e laminar antes de montar.", itens: [
     "Lâminas (B1-L, E1-L, F1-L): colar com cola de contato. Prensar com grampos 24h. Lixar bordas.",
     "Peças laqueadas: aplicar massa, lixar 180, primer/selador, lixar 320, 2 demãos de laca PU fosca bege/creme (4h entre demãos).",
@@ -1113,13 +1224,13 @@ const ETAPAS = [
     "Encaixar difusor sobre a fita, rente à superfície.",
     "Deixar sobra de fio inferior (driver na base) e superior (LED da cabeça)."
   ]},
-  { titulo: "Montagem da Cabeça", meta: "Etapa 6", desc: "Ordem: suportes em C1 → hastes H1-H5 → C2 (porta magnética) → pele C3-P.", itens: [
-    "C4 inferior: parafusar 15 mm abaixo da moldura do monitor (240 mm horizontal).",
-    "C4 superior: parafusar 15 mm acima da moldura.",
-    "C5: parafusar atrás do furo da câmera, alinhado ao centro. Verificar acesso ao parafuso 1/4\" da Canon EOS Rebel T7.",
-    "Parafusar hastes H1-H5 (144×40 mm — note: 144 = 180 prof − 2×18) por dentro de C1.",
-    "Encaixar C2 nas pontas das hastes. Instalar 16 imãs de neodímio ⌀10×3 mm (4 em C2 + 4 nas hastes) + 1 fechadura push-lock central. NÃO usar cola — C2 fica removível.",
-    "Envolver toda a lateral com C3-P (MDF flex 3 mm, ~1588 × 180 mm): cola PVA + grampos finos."
+  { titulo: "Montagem da Cabeça (3 painéis + porta traseira)", meta: "Etapa 6", desc: "V3: C1 frontal FIXO (câmera+tela) → quadro estrutural CE (osso) → C2 porta traseira basculante (Mini PC) → pele C3-P. A cabeça abre PELA TRASEIRA.", itens: [
+    "C1 (FIXO): parafusar C4 inferior/superior (suportes do monitor) e C5 (suporte câmera, rosca 1/4\" da Canon) por dentro do C1. Câmera e tela ficam no C1 — não abrem.",
+    "Parafusar as hastes H1-H5 (90×40 mm) ligando o C1 ao quadro estrutural CE (espaçamento frontal→estrutural).",
+    "CE (estrutural, quadro vazado 260×520, caixilho 40 mm): é o osso. A janela vazada deixa o corpo da câmera e o chicote atravessarem.",
+    "C2 (PORTA traseira): montar a dobradiça (piano oculta ou 2× caneco) numa borda lateral do CE; fixar o C2 nela. Lado oposto: fecho magnético + trava push. O Mini PC monta NA porta C2 (sai junto ao abrir).",
+    "Envolver a lateral com C3-P (MDF flex 3 mm, ~1588 × 180 mm): cola PVA + grampos finos. Deixar a fresta da dobradiça/abertura traseira livre.",
+    "Fixar o flange G3 (placa de transição) na base do CE — é por ele que a cabeça parafusa no topo da coluna."
   ]},
   { titulo: "Instalação do LED da Cabeça", meta: "Etapa 7", desc: "Fita LED perimetral ~1444 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
     "Inserir difusor acrílico leitoso (10 mm) no canal perimetral.",
@@ -1133,8 +1244,8 @@ const ETAPAS = [
     "Reforçar com cantoneiras internas entre as hastes inferiores e o topo da coluna.",
     "Passar cabos LED pela coluna e verificar conexões."
   ]},
-  { titulo: "Instalação dos Componentes Eletrônicos", meta: "Etapa 9", desc: "Tudo pela porta magnética traseira (sem C2).", itens: [
-    "Mini PC: suporte VESA na traseira interna da cabeça.",
+  { titulo: "Instalação dos Componentes Eletrônicos", meta: "Etapa 9", desc: "Tudo pela porta traseira basculante C2 aberta.", itens: [
+    "Mini PC: suporte VESA montado NA porta traseira C2 (sai junto quando a porta abre).",
     "Monitor 15.6\" touchscreen EM PÉ: encaixar na moldura 220×360 entre os suportes C4 (rebaixo de 4 mm na frente para a tela ficar embutida). A tela visível 194×345 fica deslocada 6 mm p/ cima — ajustar a regulagem (monitor.offset_y) conforme a borda inferior real. Conectar HDMI + USB + toque ao Mini PC.",
     "Câmera Canon EOS Rebel T7 + lente EF-S 18–55mm: rosquear no 1/4\" do C5. Apontar lente para o furo ⌀68 (aro decorativo ⌀95 embutido 8 mm).",
     "Organizar cabos. Descer alimentação pelo interior da coluna.",
@@ -1142,17 +1253,17 @@ const ETAPAS = [
     "Teste geral: ligar energia, testar monitor, câmera, LEDs."
   ]},
   { titulo: "Fechamento", meta: "Etapa 10", desc: "Fixar painéis com sistema magnético + fechadura.", itens: [
-    "C2 (traseira cabeça): encaixar com imãs + fechar fechadura central. SEM cola, SEM parafusos.",
+    "C2 (porta traseira): fechar na dobradiça + fecho magnético/trava push. Abre e fecha quantas vezes precisar.",
     "B2 (traseira coluna): parafusos M4 nos insertos. SEM cola.",
     "Conferir que todas as portas magnéticas fecham firmemente."
   ]},
-  { titulo: "Montagem do Módulo Impressora", meta: "Etapa 11", desc: "Mesma lógica do principal: base quadrada → coluna (caixa de MDF) → caixa para ASK-400 (manutenção FRONTAL).", itens: [
-    "Base 350×350 R80: D2 → D3a/D3b (paredes) → D1 (tampo). Sem contrapeso.",
+  { titulo: "Montagem do Módulo Impressora", meta: "Etapa 11", desc: "Mesma lógica do principal, mas a caixa abre PELA FRENTE (porta F1 inteira no quadro FE). Caixa dimensionada para a DNP DS620A / Fujifilm ASK-400 (mesma impressora).", itens: [
+    "Base 350×350 R80: D2 → D3a/D3b (paredes) → D1 (tampo). Contrapeso recomendado (caixa profunda — ver nota de estabilidade).",
     "Coluna 610 mm: E3+E3 → E1 → colar e parafusar sobre o furo central do tampo D1 → LED vertical (610 mm).",
-    "Caixa 320×250×400: F5 (fundo, furo 120×120) → F3+F3 (laterais, 364×250) → F4 (topo) → F1 (frontal com lâmina, slot + porta).",
-    "Encaixar caixa sobre coluna (F5 no topo). Parafusar por dentro.",
-    "Instalar impressora ASK-400 — manutenção FRONTAL pela porta magnética 280×220 de F1.",
-    "Fechar: E2 (parafusos M4) + F2 (porta magnética traseira 240×280 — imãs + fechadura)."
+    "Caixa 360×250×560: F5 (fundo, furo 120×120) → F3+F3 (laterais, 524×250) → F4 (topo) → FE (quadro estrutural fixo na frente) → F1 (porta basculante inteira na dobradiça do FE).",
+    "Encaixar caixa sobre coluna (F5 no topo, flange G3). Parafusar por dentro.",
+    "Instalar a impressora DS620A/ASK-400 (corpo 275×366×170): manutenção FRONTAL abrindo a porta F1 inteira. Folga traseira de ~150 mm para a passada do papel dye-sub.",
+    "Fechar: E2 (parafusos M4) + F2 (traseira ventilada, imãs + fechadura). F1 fecha na trava da frente."
   ]},
   { titulo: "Posicionamento Final", meta: "Etapa 12", desc: "Posicionar e conectar os dois módulos.", itens: [
     "Posicionar totem principal no local desejado.",
