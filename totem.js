@@ -706,7 +706,7 @@ const PECAS_PRINCIPAL = [
   { cod: "B2", nome: "Traseiro coluna", mat: "MDF 15 mm", esp: 15, l: 120, a: 990, qtd: 1, obs: "Removível - parafusos M4 (acesso manutenção)", desenha: dRetSimples },
   { cod: "B3", nome: "Laterais coluna", mat: "MDF 15 mm", esp: 15, l: 100, a: 990, qtd: 2, obs: "Largura = 130 − 2×15 = 100 mm (coluna 130 mm de profundidade)", desenha: dRetSimples },
   { cod: "C1", nome: "Frontal cabeça (FIXO)", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170 FIXO (não abre — mantém o enquadramento). Carrega câmera + tela + LED. Furo lente ⌀68 + rebaixo aro ⌀95×8 (centro 80 mm do topo). Monitor 15.6\" EM PÉ: rebaixo moldura 220×360×4 + recorte tela 194×345 deslocado 6 mm p/ cima. Canal LED perimetral 10×8 a 18 mm da borda", desenha: dCabecaFrontal },
-  { cod: "CE", nome: "Estrutural cabeça (quadro vazado)", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "OSSO da cabeça. Stadium 340×600 R170 VAZADO (janela interna 260×520, caixilho 40 mm). Fixa o C1 na frente, recebe a dobradiça da porta traseira C2 e parafusa no flange G3 (topo da coluna)", desenha: dCabecaEstrutural },
+  { cod: "CE", nome: "Estrutural cabeça (quadro vazado)", mat: "MDF 18 mm", esp: 18, l: 340, a: 600, qtd: 1, obs: "OSSO da cabeça. Stadium 340×600 R170 VAZADO (janela interna 260×520, caixilho 40 mm). Fixa o C1 na frente, recebe a dobradiça da porta traseira C2 e apoia na base reta interna G2, que parafusa direto no topo da coluna", desenha: dCabecaEstrutural },
   { cod: "C2", nome: "Traseiro cabeça (PORTA basculante)", mat: "MDF 15 mm", esp: 15, l: 340, a: 600, qtd: 1, obs: "Stadium 340×600 R170. Abre PELA TRASEIRA numa dobradiça lateral fixada no CE. O Mini PC fica montado nela (sai junto ao abrir). Lado oposto: fecho magnético + trava", desenha: dCabecaTraseira },
   { cod: "C3-P", nome: "Pele lateral cabeça", mat: "MDF flex 3 mm", esp: 3, l: 1588, a: 180, qtd: 1, obs: "Perímetro stadium 340×600 R170 = ~1588 mm × 180 mm altura. Cola PVA + grampos finos", desenha: dTira },
   { cod: "H1", nome: "Haste lateral esquerda", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (90 = distância frontal-estrutural)", desenha: dRetSimples },
@@ -716,9 +716,8 @@ const PECAS_PRINCIPAL = [
   { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (topo do arco stadium)", desenha: dRetSimples },
   { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais no C1 (1 acima + 1 abaixo da moldura do monitor)", desenha: dRetSimples },
   { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Fixo no C1. Furo central rosca 1/4\" para a Canon EOS Rebel T7 (câmera acompanha o C1 fixo)", desenha: dSuporteCamera },
-  { cod: "G1", nome: "Flange base ↔ coluna", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Quadro de união interno. Centra a coluna no soquete 120×130 da base. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
-  { cod: "G2", nome: "Flange topo da coluna", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Placa-tampa do topo da coluna. Furo passa-cabo ⌀30 + 4 insertos M6 (casa com G3)", desenha: dFlangeCabo },
-  { cod: "G3", nome: "Flange base cabeça (transição)", mat: "MDF 18 mm", esp: 18, l: 340, a: 150, qtd: 1, obs: "Placa de transição retângulo (coluna 120×130) → caixilho stadium da cabeça. Furo passa-cabo ⌀30 + 4× M6 prendem a cabeça na coluna", desenha: dFlangeCabo }
+  { cod: "G1", nome: "Encaixe coluna ↔ base (interno)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Quadro interno escondido na base. Centra a coluna no soquete 120×130. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
+  { cod: "G2", nome: "Base de fixação reta da cabeça (interna)", mat: "MDF 18 mm", esp: 18, l: 130, a: 130, qtd: 1, obs: "BASE RETA por DENTRO da cabeça, sobre o topo da coluna. A cabeça conecta DIRETO na coluna (sem placa de transição aparente): furo passa-cabo ⌀30 + 3–4 parafusos M6 REMOVÍVEIS", desenha: dFlangeCabo }
 ];
 
 const PECAS_IMPRESSORA = [
@@ -737,9 +736,8 @@ const PECAS_IMPRESSORA = [
   { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 384, a: 250, qtd: 2, obs: "Profundidade interna = 420 − 18 − 18 = 384 mm. Cantos R40 nas bordas", desenha: dRetSimples },
   { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 384, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (324 = 360 − 2×18)", desenha: dRetSimples },
   { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 384, qtd: 1, obs: "Furo central 120×120 (encaixe coluna) + furo passa-cabo", desenha: dRetFuro },
-  { cod: "G1", nome: "Flange base ↔ coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Centra a coluna no soquete 120×120 da base. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
-  { cod: "G2", nome: "Flange topo da coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Placa-tampa. Furo passa-cabo ⌀30 + 4 insertos M6 (casa com G3)", desenha: dFlangeCabo },
-  { cod: "G3", nome: "Flange base caixa (transição)", mat: "MDF 18 mm", esp: 18, l: 324, a: 150, qtd: 1, obs: "Placa de transição coluna → fundo da caixa. Furo passa-cabo ⌀30 + 4× M6", desenha: dFlangeCabo }
+  { cod: "G1", nome: "Encaixe coluna ↔ base impr. (interno)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Quadro interno escondido na base. Centra a coluna no soquete 120×120. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
+  { cod: "G2", nome: "Base de fixação reta da caixa (interna)", mat: "MDF 18 mm", esp: 18, l: 130, a: 130, qtd: 1, obs: "BASE RETA por DENTRO da caixa, sobre o topo da coluna. A caixa conecta DIRETO na coluna: furo passa-cabo ⌀30 + 3–4 parafusos M6 REMOVÍVEIS", desenha: dFlangeCabo }
 ];
 
 /* ===== DESENHOS DAS PEÇAS ===== */
@@ -1196,7 +1194,7 @@ function renderListas() {
    ============================================================ */
 
 const ETAPAS = [
-  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V3 (inclui os novos quadros estruturais CE/FE, os flanges de união G1–G3 e a caixa da impressora redimensionada). Identificar com fita-crepe e caneta." },
+  { titulo: "Verificação das Peças", meta: "Pré-montagem", desc: "Conferir todas as peças recebidas contra a lista V3 (inclui os novos quadros estruturais CE/FE, as bases de fixação internas G1/G2 e a caixa da impressora redimensionada). Identificar com fita-crepe e caneta." },
   { titulo: "Acabamento (ANTES da montagem)", meta: "1-2 dias", desc: "É muito mais fácil laquear e laminar antes de montar.", itens: [
     "Lâminas (B1-L, E1-L, F1-L): colar com cola de contato. Prensar com grampos 24h. Lixar bordas.",
     "Peças laqueadas: aplicar massa, lixar 180, primer/selador, lixar 320, 2 demãos de laca PU fosca bege/creme (4h entre demãos).",
@@ -1230,7 +1228,7 @@ const ETAPAS = [
     "CE (estrutural, quadro vazado 260×520, caixilho 40 mm): é o osso. A janela vazada deixa o corpo da câmera e o chicote atravessarem.",
     "C2 (PORTA traseira): montar a dobradiça (piano oculta ou 2× caneco) numa borda lateral do CE; fixar o C2 nela. Lado oposto: fecho magnético + trava push. O Mini PC monta NA porta C2 (sai junto ao abrir).",
     "Envolver a lateral com C3-P (MDF flex 3 mm, ~1588 × 180 mm): cola PVA + grampos finos. Deixar a fresta da dobradiça/abertura traseira livre.",
-    "Fixar o flange G3 (placa de transição) na base do CE — é por ele que a cabeça parafusa no topo da coluna."
+    "A cabeça conecta DIRETO no topo da coluna pela base de fixação reta G2 (interna, por dentro da cabeça), com 3–4 parafusos M6 removíveis — sem placa de transição aparente."
   ]},
   { titulo: "Instalação do LED da Cabeça", meta: "Etapa 7", desc: "Fita LED perimetral ~1444 mm no canal de C1 (canal a 18 mm da borda externa).", itens: [
     "Inserir difusor acrílico leitoso (10 mm) no canal perimetral.",
@@ -1261,7 +1259,7 @@ const ETAPAS = [
     "Base 350×350 R80: D2 → D3a/D3b (paredes) → D1 (tampo). Contrapeso recomendado (caixa profunda — ver nota de estabilidade).",
     "Coluna 610 mm: E3+E3 → E1 → colar e parafusar sobre o furo central do tampo D1 → LED vertical (610 mm).",
     "Caixa 360×250×420: F5 (fundo, furo 120×120) → F3+F3 (laterais, 384×250) → F4 (topo) → FE (quadro estrutural fixo na frente) → F1 (porta basculante inteira na dobradiça do FE).",
-    "Encaixar caixa sobre coluna (F5 no topo, flange G3). Parafusar por dentro.",
+    "Encaixar caixa sobre a coluna: a caixa conecta DIRETO no topo da coluna pela base de fixação reta G2 (interna), com 3–4 parafusos M6 removíveis.",
     "Instalar a impressora DS620A/ASK-400 (corpo 275×366×170): manutenção FRONTAL abrindo a porta F1 inteira. Traseira F2 ventilada dá saída ao papel dye-sub.",
     "Fechar: E2 (parafusos M4) + F2 (traseira ventilada, imãs + fechadura). F1 fecha na trava da frente."
   ]},

@@ -137,9 +137,10 @@ function piece(geometry, material, info, opts = {}) {
   return mesh;
 }
 
-/* Flanges de união (G1/G2/G3) + duto de cabos vertical escondido.
-   structItems: recebe os flanges (entram no raio-X). O cabo fica fora da lista
-   para permanecer opaco e aparecer quando os painéis ficam transparentes. */
+/* Conexão coluna → cabeça/caixa: SEM flanges externos. A cabeça/caixa conecta
+   direto na coluna por uma BASE RETA interna (G2), fixada no topo da coluna com
+   3–4 parafusos removíveis. Mais o duto de cabos escondido e o encaixe na base (G1).
+   structItems: recebe a base + parafusos; o cabo fica fora p/ permanecer opaco. */
 function addFlangesECabo(group, structItems, p) {
   const fmat = mat(0xC9BBA6, { roughness: 0.6 });
 
@@ -150,24 +151,32 @@ function addFlangesECabo(group, structItems, p) {
     mat(0xcc6a2a, { roughness: 0.5, emissive: 0x2e1505, emissiveIntensity: 0.25 })
   );
   cabo.position.set(0, (p.yBaseTop + p.yHeadCenter) / 2, 0);
-  cabo.userData = { cod: 'CABO', nome: 'Duto de cabos (escondido)', mat: 'HDMI + USB + 220V', obs: 'Desce pelo canal 60×60 da coluna, pelos furos ⌀30 dos flanges, e sai pela base (⌀25)' };
+  cabo.userData = { cod: 'CABO', nome: 'Duto de cabos (escondido)', mat: 'HDMI + USB + 220V', obs: 'Desce pelo canal 60×60 da coluna e sai pela base (⌀25)' };
   pieces.push(cabo);
   group.add(cabo);
 
-  // G1 base ↔ coluna
-  const g1 = piece(new THREE.BoxGeometry(150, 8, 140), fmat, pcInfo('G1'));
+  // G1 — encaixe da coluna na base (interno, no tamanho da coluna, escondido na base)
+  const g1 = piece(new THREE.BoxGeometry(120, 8, 130), fmat, pcInfo('G1'));
   g1.position.set(0, p.yBaseTop + 4, 0);
   group.add(g1); structItems.push(g1);
 
-  // G2 topo da coluna
-  const g2 = piece(new THREE.BoxGeometry(150, 8, 140), fmat, pcInfo('G2'));
-  g2.position.set(0, p.yColTop - 4, 0);
-  group.add(g2); structItems.push(g2);
+  // G2 — BASE DE FIXAÇÃO RETA, por DENTRO da cabeça/caixa, sobre o topo da coluna.
+  // A cabeça/caixa parafusa direto aqui no topo da coluna (sem placa de transição aparente).
+  const baseY = p.yColTop + p.mountUp;
+  const gbase = piece(new THREE.BoxGeometry(130, 15, 130), fmat, pcInfo('G2'));
+  gbase.position.set(0, baseY, 0);
+  group.add(gbase); structItems.push(gbase);
 
-  // G3 base da cabeça/caixa (placa de transição)
-  const g3 = piece(new THREE.BoxGeometry(p.g3w, 8, 150), fmat, pcInfo('G3'));
-  g3.position.set(0, p.yColTop + 8, 0);
-  group.add(g3); structItems.push(g3);
+  // 3–4 parafusos removíveis ligando a base reta ao topo da coluna
+  const screwMat = mat(0x6b6e73, { metalness: 0.85, roughness: 0.3 });
+  const sH = (baseY - p.yColTop) + 22;
+  [[-42, 42], [42, 42], [-42, -42], [42, -42]].forEach(([sx, sz]) => {
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, sH, 16), screwMat);
+    screw.position.set(sx, p.yColTop + sH / 2 - 7, sz);
+    screw.userData = { cod: 'PARAF', nome: 'Parafuso removível M6', mat: 'Inox · 3–4 un.', obs: 'Fixam a cabeça/caixa direto no topo da coluna pela base reta interna G2' };
+    pieces.push(screw);
+    group.add(screw); structItems.push(screw);
+  });
 }
 
 /* ============== INIT ============== */
@@ -550,7 +559,7 @@ function buildPrincipal() {
   group.add(doorPivot);
 
   /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
-  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: cabY, g3w: T.cabeca.largura });
+  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: cabY, mountUp: 30 });
 
   group.userData = { cabecaItems, colunaItems, baseItems, doorPivot };
   group.position.set(-475, 0, 0);
@@ -729,7 +738,7 @@ function buildImpressora() {
   group.add(doorPivot);
 
   /* === FLANGES DE UNIÃO + DUTO DE CABOS (MOD 02) === */
-  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: caixaCenterY, g3w: T.caixa.largura - 36 });
+  addFlangesECabo(group, colunaItems, { yBaseTop: T.base.altura, yColTop: T.coluna.y_fim, yHeadCenter: caixaCenterY, mountUp: 20 });
 
   group.userData = { caixaItems, colunaItems, baseItems, doorPivot };
   group.position.set(475, 0, 0);
@@ -810,7 +819,7 @@ function setupToolbar() {
 
   // Raio-X: deixa a casca semi-transparente para ver os componentes internos
   // (monitor, câmera, mini PC). Mantém telas/LEDs/componentes opacos.
-  const INTERNOS = new Set(['MON', 'CAM', 'MINIPC', 'IMPR', 'CABO']);
+  const INTERNOS = new Set(['MON', 'CAM', 'MINIPC', 'IMPR', 'CABO', 'G1', 'G2', 'PARAF']);
   const xrayBtn = document.getElementById('t3d-internos');
   xrayBtn?.addEventListener('click', () => {
     xrayBtn.classList.toggle('active');
