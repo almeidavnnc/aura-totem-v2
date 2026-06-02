@@ -76,10 +76,13 @@ estrutural** no meio, exatamente "entre o C2 e a estrutura que prende o C1".
 | Camada (frente → trás)                       | Profundidade | z aprox. (centro = 0) |
 |----------------------------------------------|--------------|-----------------------|
 | C1 frontal (FIXO) — câmera + tela            | 18 mm        | +90 … +72             |
-| Zona interna: corpo câmera (75) / monitor (28) atravessam o CE | ~90 mm | +72 … −18 |
-| **CE estrutural** (caixilho 40 mm)           | 18 mm        | −18 … −36             |
-| Espaço da porta: Mini PC (50)                | ~39 mm       | −36 … −75             |
-| C2 traseiro / porta                          | 15 mm        | −75 … −90             |
+| Cavidade interna: corpo câmera (75) / monitor (28) + hastes | ~129 mm | +72 … −57 |
+| **CE estrutural** (caixilho 40 mm) — na TRASEIRA, encostado no C2 | 18 mm | −57 … −75 |
+| C2 porta traseira (Mini PC montado nela)     | 15 mm        | −75 … −90             |
+
+> **CE fica na traseira, colado ao C2.** A porta C2 prende no CE pelas
+> dobradiças; o Mini PC vai montado na porta. Ao abrir o C2, a janela vazada
+> do CE dá acesso ao interior (câmera/monitor/cabos).
 
 ### Peças/ferragens novas — MOD 01
 | Item                                          | Qtd | Obs                                    |
@@ -207,19 +210,20 @@ para o papel transitar e para ventilação/calor.
 
 Aumentar a caixa para caber o corpo **+ folga traseira do papel + ventilação**:
 
-| Dimensão caixa | V2 (atual) | **V3 proposta** | Por quê                                   |
-|----------------|------------|-----------------|-------------------------------------------|
-| Largura        | 320 mm     | **360 mm**      | Interior ~324 → ~25 mm/lado p/ ar e cabos |
-| Altura         | 250 mm     | **250 mm**      | OK, mantém                                |
-| Profundidade   | 400 mm     | **560 mm**      | Interior ~524 = corpo 366 + ~150 folga traseira (papel + ar) |
+| Dimensão caixa | V2 (atual) | **V3 (final)** | Por quê                                   |
+|----------------|------------|----------------|-------------------------------------------|
+| Largura        | 320 mm     | **360 mm**     | Interior ~324 → ~25 mm/lado p/ ar e cabos |
+| Altura         | 250 mm     | **250 mm**     | OK, mantém                                |
+| Profundidade   | 400 mm     | **420 mm**     | Interior ~384 = corpo 366 (~37 cm) + folga; traseira F2 ventilada dá saída ao papel |
 
 Com isso a **traseira F2 fica removível e ventilada** (grelha), permitindo a
 passada do papel e a dissipação de calor.
 
-> **DECISÃO 6 — ✅ ESCOLHIDA: opção (A)**
-> Caixa fechada e ventilada → **360 × 250 × 560 mm** (corpo da impressora +
-> ~150 mm de folga traseira para a passada do papel + ventilação). Traseira F2
-> com grelha de ventilação.
+> **DECISÃO 6 — ✅ FINAL: 360 × 250 × 420 mm**
+> O corpo da DS620A/ASK-400 tem **366 mm (~37 cm)** de profundidade. 420 mm dá
+> a folga necessária com a traseira F2 ventilada — sem o exagero dos 560 mm.
+> **Bônus:** 420 sobre base de 350 deixa só ~35 mm de balanço (a estabilidade
+> deixa de ser problema).
 
 ---
 
@@ -266,7 +270,7 @@ passada do papel e a dissipação de calor.
 | 3 | Flange coluna↔cabeça (G3)         | ✅ Placa de transição retângulo→stadium, 4× M6         |
 | 4 | Slot da foto                      | ✅ Permanece no F1 (abre junto)                        |
 | 5 | Caixilho dos quadros (CE/FE)      | ✅ 40 mm                                                |
-| 6 | Tamanho da caixa da impressora    | ✅ Opção **A**: caixa **360 × 250 × 560 mm** (ventilada) |
+| 6 | Tamanho da caixa da impressora    | ✅ Caixa **360 × 250 × 420 mm** (corpo 37 cm + folga, F2 ventilada) |
 
 ---
 

@@ -897,6 +897,13 @@ svg { display: block; }
   font-family: var(--font-sans);
   transition: all 0.15s;
 }
+.three-toolbar .chip-sep {
+  align-self: center;
+  margin-left: 8px;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.74rem;
+  font-family: var(--font-sans);
+}
 .three-toolbar .chip:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 .three-toolbar .chip.active {
   background: var(--accent);

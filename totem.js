@@ -103,7 +103,7 @@ const IMPRESSORA = {
   caixa: {
     largura: 360,        // V3: 320 → 360 (corpo 275 + folga p/ ar e cabos)
     altura: 250,
-    profundidade: 560,   // V3: 400 → 560 (corpo 366 + ~150 folga traseira do papel dye-sub)
+    profundidade: 420,   // V3: corpo 366 (~37 cm) + folga; traseira F2 ventilada
     raio_cantos: 40,
     caixilho: 40,        // largura da borda do quadro estrutural FE
     y_inicio: 670,
@@ -734,9 +734,9 @@ const PECAS_IMPRESSORA = [
   { cod: "F1-L", nome: "Lâmina madeira caixa", mat: "Lâmina 0.6 mm", esp: 0.6, l: 360, a: 250, qtd: 1, obs: "Mesmo recorte do slot. Colada no F1 (porta)", desenha: dRetSimples },
   { cod: "FE", nome: "Estrutural caixa (quadro vazado)", mat: "MDF 18 mm", esp: 18, l: 360, a: 250, qtd: 1, obs: "Quadro R40 VAZADO (caixilho 40 mm) fixo na caixa. Recebe a dobradiça do F1 e a trava. Equivalente ao CE da cabeça", desenha: dCaixaEstrutural },
   { cod: "F2", nome: "Traseiro caixa (ventilado)", mat: "MDF 15 mm", esp: 15, l: 360, a: 250, qtd: 1, obs: "Cantos R40. Grelha de ventilação + folga p/ a passada do papel dye-sub. Removível (imãs + fechadura)", desenha: dCaixaTraseiraVent },
-  { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 524, a: 250, qtd: 2, obs: "Profundidade interna = 560 − 18 − 18 = 524 mm. Cantos R40 nas bordas", desenha: dRetSimples },
-  { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 524, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (324 = 360 − 2×18)", desenha: dRetSimples },
-  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 524, qtd: 1, obs: "Furo central 120×120 (encaixe coluna) + furo passa-cabo", desenha: dRetFuro },
+  { cod: "F3", nome: "Laterais caixa impr.", mat: "MDF 15 mm", esp: 15, l: 384, a: 250, qtd: 2, obs: "Profundidade interna = 420 − 18 − 18 = 384 mm. Cantos R40 nas bordas", desenha: dRetSimples },
+  { cod: "F4", nome: "Topo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 384, qtd: 1, obs: "Encaixa entre F1, F2 e F3 (324 = 360 − 2×18)", desenha: dRetSimples },
+  { cod: "F5", nome: "Fundo da caixa impr.", mat: "MDF 15 mm", esp: 15, l: 324, a: 384, qtd: 1, obs: "Furo central 120×120 (encaixe coluna) + furo passa-cabo", desenha: dRetFuro },
   { cod: "G1", nome: "Flange base ↔ coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Centra a coluna no soquete 120×120 da base. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
   { cod: "G2", nome: "Flange topo da coluna (impr.)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Placa-tampa. Furo passa-cabo ⌀30 + 4 insertos M6 (casa com G3)", desenha: dFlangeCabo },
   { cod: "G3", nome: "Flange base caixa (transição)", mat: "MDF 18 mm", esp: 18, l: 324, a: 150, qtd: 1, obs: "Placa de transição coluna → fundo da caixa. Furo passa-cabo ⌀30 + 4× M6", desenha: dFlangeCabo }
@@ -1260,9 +1260,9 @@ const ETAPAS = [
   { titulo: "Montagem do Módulo Impressora", meta: "Etapa 11", desc: "Mesma lógica do principal, mas a caixa abre PELA FRENTE (porta F1 inteira no quadro FE). Caixa dimensionada para a DNP DS620A / Fujifilm ASK-400 (mesma impressora).", itens: [
     "Base 350×350 R80: D2 → D3a/D3b (paredes) → D1 (tampo). Contrapeso recomendado (caixa profunda — ver nota de estabilidade).",
     "Coluna 610 mm: E3+E3 → E1 → colar e parafusar sobre o furo central do tampo D1 → LED vertical (610 mm).",
-    "Caixa 360×250×560: F5 (fundo, furo 120×120) → F3+F3 (laterais, 524×250) → F4 (topo) → FE (quadro estrutural fixo na frente) → F1 (porta basculante inteira na dobradiça do FE).",
+    "Caixa 360×250×420: F5 (fundo, furo 120×120) → F3+F3 (laterais, 384×250) → F4 (topo) → FE (quadro estrutural fixo na frente) → F1 (porta basculante inteira na dobradiça do FE).",
     "Encaixar caixa sobre coluna (F5 no topo, flange G3). Parafusar por dentro.",
-    "Instalar a impressora DS620A/ASK-400 (corpo 275×366×170): manutenção FRONTAL abrindo a porta F1 inteira. Folga traseira de ~150 mm para a passada do papel dye-sub.",
+    "Instalar a impressora DS620A/ASK-400 (corpo 275×366×170): manutenção FRONTAL abrindo a porta F1 inteira. Traseira F2 ventilada dá saída ao papel dye-sub.",
     "Fechar: E2 (parafusos M4) + F2 (traseira ventilada, imãs + fechadura). F1 fecha na trava da frente."
   ]},
   { titulo: "Posicionamento Final", meta: "Etapa 12", desc: "Posicionar e conectar os dois módulos.", itens: [

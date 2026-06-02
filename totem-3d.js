@@ -9,6 +9,7 @@ const OrbitControls = THREE.OrbitControls;
 let scene, camera, renderer, controls;
 let principalGroup, impressoraGroup;
 let raycaster, mouse;
+let groundMesh;
 const pieces = [];     // meshes alvo do raycaster (com userData)
 const leds = [];
 const madeira = [];
@@ -16,18 +17,22 @@ let isExploded = false;
 let initialized = false;
 let tooltip, legend, containerEl;
 
-const COLORS = {
-  base: 0xD4C5B2,
-  baseEdge: 0xC4B5A0,
-  madeira: 0xC4A882,
-  tela: 0x0d1224,
-  led: 0xFFEAA7,
-  ledHot: 0xffd97a,
-  porta: 0xb8956a,
-  ground: 0xe8e2d6,
-  bg: 0x2a2620,
-  haste: 0xa89178
+const THEMES = {
+  bege: {
+    base: 0xD4C5B2, baseEdge: 0xC4B5A0, madeira: 0xC4A882, porta: 0xb8956a, haste: 0xa89178,
+    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0xe8e2d6, bg: 0x2a2620
+  },
+  branca: {
+    base: 0xF4F2EE, baseEdge: 0xE2DDD4, madeira: 0xC4A882, porta: 0xE6DFD4, haste: 0xD2CBC0,
+    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0xeceae6, bg: 0x40403f
+  },
+  cinza: {
+    base: 0x3D4045, baseEdge: 0x2E3135, madeira: 0xB89B78, porta: 0x4B4F55, haste: 0x565A60,
+    tela: 0x0d1224, led: 0xFFEAA7, ledHot: 0xffd97a, ground: 0x202023, bg: 0x141416
+  }
 };
+let currentTheme = 'bege';
+let COLORS = { ...THEMES.bege };
 
 /* ============== UTILS ============== */
 
@@ -188,10 +193,10 @@ function initThree() {
   scene.add(fill);
 
   // Ground
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), mat(COLORS.ground, { roughness: 0.95 }));
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
+  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), mat(COLORS.ground, { roughness: 0.95 }));
+  groundMesh.rotation.x = -Math.PI / 2;
+  groundMesh.receiveShadow = true;
+  scene.add(groundMesh);
 
   // Controls
   controls = new OrbitControls(camera, renderer.domElement);
@@ -314,7 +319,8 @@ function buildPrincipal() {
   group.add(c1); cabecaItems.push(c1);
 
   // CE estrutural — quadro stadium VAZADO (osso da cabeça), fixo.
-  // A janela interna deixa o corpo da câmera e o chicote de cabos atravessarem.
+  // Fica na TRASEIRA, encostado no C2 (a porta), que se prende nele pelas dobradiças.
+  // A janela vazada dá acesso ao interior (câmera/cabos) quando a porta C2 abre.
   const caiC = T.cabeca.caixilho || 40;
   const ce = piece(
     new THREE.ExtrudeGeometry(
@@ -323,12 +329,12 @@ function buildPrincipal() {
     ),
     begeEdge, pcInfo('CE')
   );
-  ce.position.set(0, cabY, -9);
+  ce.position.set(0, cabY, -75);   // fundo da cabeça, face traseira encostando no C2
   group.add(ce); cabecaItems.push(ce);
 
-  // Hastes H1-H5 — espaçadores ligando o C1 (z=72) ao CE estrutural (z=9)
-  const hLen = 63;            // 72 (face interna C1) − 9 (face frontal CE)
-  const hZ = 40.5;           // centro do vão C1↔CE
+  // Hastes H1-H5 — espaçadores ligando o C1 (z=72) ao CE estrutural na traseira (z=-57)
+  const hLen = 129;          // 72 (face interna C1) − (−57) (face frontal CE)
+  const hZ = 7.5;            // centro do vão C1↔CE
   const hX = T.cabeca.largura / 2 - 30; // 140
   const hY1 = cabY;
   const hY2 = T.cabeca.y_inicio + 70;
@@ -646,7 +652,7 @@ function buildImpressora() {
     mat(0x26262b, { roughness: 0.5, metalness: 0.3 }),
     { cod: 'IMPR', nome: 'Impressora DNP DS620A / Fujifilm ASK-400', mat: U.l + '×' + U.p + '×' + U.a + ' mm · ' + U.peso + ' kg', l: U.l, a: U.a, obs: 'Mesma impressora (ASK-400 = DS620A rebatizada). Manutenção FRONTAL pela porta F1. Empurrada p/ frente → folga traseira p/ a passada do papel dye-sub' }
   );
-  impr.position.set(0, T.caixa.y_inicio + 18 + U.a / 2, 60);
+  impr.position.set(0, T.caixa.y_inicio + 18 + U.a / 2, -10);  // centrado na caixa de 420
   group.add(impr); caixaItems.push(impr);
 
   /* === PORTA FRONTAL F1 (inteira) — gira numa dobradiça lateral === */
@@ -691,6 +697,26 @@ function buildImpressora() {
   group.position.set(475, 0, 0);
   impressoraGroup = group;
   scene.add(group);
+}
+
+/* ============== TEMA DE CORES ============== */
+
+function applyTheme(name) {
+  if (!THEMES[name] || !scene) return;
+  currentTheme = name;
+  COLORS = { ...THEMES[name] };
+
+  // Fundo, neblina e chão
+  scene.background = new THREE.Color(COLORS.bg);
+  if (scene.fog) scene.fog.color = new THREE.Color(COLORS.bg);
+  if (groundMesh) groundMesh.material.color.set(COLORS.ground);
+
+  // Reconstruir os dois módulos com a nova paleta
+  if (principalGroup) { scene.remove(principalGroup); principalGroup = null; }
+  if (impressoraGroup) { scene.remove(impressoraGroup); impressoraGroup = null; }
+  pieces.length = 0; leds.length = 0; madeira.length = 0;
+  buildPrincipal();
+  buildImpressora();
 }
 
 /* ============== TOOLTIP (RAYCASTER) ============== */
@@ -804,6 +830,17 @@ function setupToolbar() {
     camera.position.set(1900, 1400, 2900);
     controls.target.set(0, 850, 0);
     controls.update();
+  });
+
+  // Temas de cor (Bege / Branca / Cinza escura)
+  const temas = [['t3d-cor-bege', 'bege'], ['t3d-cor-branca', 'branca'], ['t3d-cor-cinza', 'cinza']];
+  const corBtns = temas.map(([id]) => document.getElementById(id));
+  temas.forEach(([id, name], i) => {
+    corBtns[i]?.addEventListener('click', () => {
+      corBtns.forEach(b => b && b.classList.remove('active'));
+      corBtns[i].classList.add('active');
+      applyTheme(name);
+    });
   });
 }
 
