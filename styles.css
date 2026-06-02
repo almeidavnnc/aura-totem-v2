@@ -904,6 +904,35 @@ svg { display: block; }
   font-size: 0.74rem;
   font-family: var(--font-sans);
 }
+
+/* Galeria de renders fotorrealistas */
+.render-gallery { margin-top: 22px; }
+.render-title { margin: 0 0 4px; font-size: 1rem; color: var(--ink-strong); }
+.render-sub { margin: 0 0 12px; font-size: 0.82rem; color: var(--ink-faint); }
+.render-sub code { font-size: 0.78rem; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px; }
+.render-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.render-grid figure { margin: 0; }
+.render-grid img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #2a2620;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.render-grid a:hover img { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.18); }
+.render-grid figcaption {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: center;
+}
+@media (max-width: 760px) { .render-grid { grid-template-columns: 1fr; } }
 .three-toolbar .chip:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 .three-toolbar .chip.active {
   background: var(--accent);
