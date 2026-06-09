@@ -108,7 +108,7 @@ const IMPRESSORA = {
     caixilho: 40,        // largura da borda do quadro estrutural FE
     y_inicio: 670,
     y_fim: 920,
-    slot: { l: 180, a: 15, cy: 800 }
+    slot: { l: 180, a: 15, cy: 805 }   // centro 135 mm (13,5 cm) acima da base da caixa (y_inicio 670)
   }
 };
 
@@ -996,10 +996,10 @@ function dCaixaFrontal(g, p, esc) {
   // Trava (lado direito) — marca
   g.appendChild(el("circle", { cx: (p.l - 14) * esc, cy: (p.a / 2) * esc, r: 6 * esc, fill: "#444" }));
 
-  // Slot saída ~120mm do topo
+  // Slot saída — centro 135mm da base (= 115mm do topo num painel de 250)
   const slotW = 180, slotH = 15;
   const slotX = (p.l - slotW) / 2;
-  const slotY = 120 - slotH / 2;
+  const slotY = (p.a - 135) - slotH / 2;
   g.appendChild(el("rect", {
     x: slotX * esc, y: slotY * esc,
     width: slotW * esc, height: slotH * esc,
