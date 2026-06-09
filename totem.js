@@ -1009,6 +1009,19 @@ function dCaixaFrontal(g, p, esc) {
   const t = el("text", { x: p.l * esc / 2, y: (slotY - 4) * esc, "text-anchor": "middle", class: "cota-texto" });
   t.textContent = "Slot 180×15";
   g.appendChild(t);
+
+  // Cota da ALTURA do slot: centro 135 mm acima da base (borda inferior do painel)
+  const slotCy = p.a - 135;          // centro do slot em mm (a partir do topo)
+  const cotaX = p.l - 28;            // coluna da cota, à direita do slot
+  g.appendChild(el("line", {
+    x1: cotaX * esc, y1: slotCy * esc, x2: cotaX * esc, y2: p.a * esc,
+    class: "cota-linha", "marker-start": "url(#arrow)", "marker-end": "url(#arrow)"
+  }));
+  g.appendChild(el("line", { x1: (slotX + slotW) * esc, y1: slotCy * esc, x2: cotaX * esc, y2: slotCy * esc, class: "cota-linha" }));
+  const tA = el("text", { x: (cotaX + 5) * esc, y: ((slotCy + p.a) / 2) * esc, "text-anchor": "start", class: "cota-texto" });
+  tA.textContent = "135 (da base)";
+  g.appendChild(tA);
+
   const t2 = el("text", { x: p.l * esc / 2, y: (p.a / 2 + 30) * esc, "text-anchor": "middle", class: "cota-texto" });
   t2.textContent = "Porta frontal INTEIRA (dobradiça ←, trava →)";
   g.appendChild(t2);
