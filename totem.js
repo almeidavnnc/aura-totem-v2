@@ -973,12 +973,9 @@ function dSuporteCamera(g, p, esc) {
 
   // Orientação: a LENTE aponta para o C1 (topo do desenho = frente do totem);
   // a TELA fica no lado oposto (fundo = borda de baixo, lado da porta C2).
-  // Referência fixa: a TELA recua 10 mm da borda de FUNDO. O soquete do tripé
-  // fica sob a lente, a ~52 mm da face da tela → é aí que vai o furo 1/4".
-  const telaRecuo = 30;                       // tela a 30 mm da borda de FUNDO (câmera toda dentro)
-  const roscaTela = 52;                       // soquete a ~52 mm da face da tela — MEDIR na câmera real
-  const furoFundo = telaRecuo + roscaTela;    // = 82 mm da borda de fundo
-  const furoRec = p.a - furoFundo;            // = 48 mm da borda frontal (topo)
+  // Furo da rosca 1/4" a 30 mm (3 cm) da TELA, que fica no fundo do C5.
+  const furoFundo = 30;                       // furo a 3 cm da tela (borda de fundo)
+  const furoRec = p.a - furoFundo;            // = 100 mm da borda frontal (topo)
   const fx = p.l / 2;                         // centro na largura
   const fy = furoRec;
   g.appendChild(el("circle", { cx: fx * esc, cy: fy * esc, r: 4 * esc, class: "componente" }));

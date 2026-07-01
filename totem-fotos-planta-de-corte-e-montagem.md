@@ -204,7 +204,7 @@
 | **Material**        | MDF 15 mm                                |
 | **Dimensões**       | 140 (largura) × 130 (profundidade) mm    |
 | **Orientação**      | Lente aponta para o C1 (frente); tela vira para o fundo (porta C2) |
-| **Furo rosca**      | Rosca 1/4" centrada na largura, a **~82 mm da borda de FUNDO** (~48 mm da frente) = 30 mm (tela recuada do fundo, câmera toda dentro) + ~52 mm (soquete do tripé sob a lente, medido da face da tela). **MEDIR na câmera real** a distância tela→soquete — Canon EOS Rebel T7 |
+| **Furo rosca**      | Rosca 1/4" centrada na largura, a **30 mm (3 cm) da TELA** (borda de fundo do C5). Câmera toda dentro do totem — Canon EOS Rebel T7 |
 | **Quantidade**      | **1 unidade**                            |
 
 ### Peça T1 — Tubo Estrutural (par)
@@ -234,7 +234,7 @@
 | H1–H5  | Hastes estruturais             | MDF 15 mm       | 144 × 40             | 5   |
 | C3-P   | Pele lateral cabeça            | MDF flex 3 mm   | 1296 × 180           | 1   |
 | C4     | Suporte monitor                | MDF 15 mm       | 220 × 20             | 2   |
-| C5     | Suporte câmera                 | MDF 15 mm       | 140 × 130 (furo rosca ~82 mm do fundo) | 1   |
+| C5     | Suporte câmera                 | MDF 15 mm       | 140 × 130 (furo rosca 30 mm da tela/fundo) | 1   |
 | T1     | Tubo estrutural coluna         | Tubo 20×20 mm   | 1600 mm              | 2   |
 
 ---
