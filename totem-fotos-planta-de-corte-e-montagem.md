@@ -202,8 +202,8 @@
 | Especificação       | Valor                                    |
 |---------------------|------------------------------------------|
 | **Material**        | MDF 15 mm                                |
-| **Dimensões**       | 160 × 80 mm                              |
-| **Furo central**    | Rosca 1/4" (fixar Canon EOS Rebel T7)   |
+| **Dimensões**       | 140 (largura) × 130 (profundidade) mm    |
+| **Furo rosca**      | Rosca 1/4" a **10 mm da borda frontal** (câmera recuada 1 cm), centrado na largura — Canon EOS Rebel T7 |
 | **Quantidade**      | **1 unidade**                            |
 
 ### Peça T1 — Tubo Estrutural (par)
@@ -233,7 +233,7 @@
 | H1–H5  | Hastes estruturais             | MDF 15 mm       | 144 × 40             | 5   |
 | C3-P   | Pele lateral cabeça            | MDF flex 3 mm   | 1296 × 180           | 1   |
 | C4     | Suporte monitor                | MDF 15 mm       | 220 × 20             | 2   |
-| C5     | Suporte câmera                 | MDF 15 mm       | 160 × 80             | 1   |
+| C5     | Suporte câmera                 | MDF 15 mm       | 140 × 130 (furo rosca a 10 mm da frente) | 1   |
 | T1     | Tubo estrutural coluna         | Tubo 20×20 mm   | 1600 mm              | 2   |
 
 ---

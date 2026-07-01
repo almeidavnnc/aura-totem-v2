@@ -532,21 +532,28 @@ function buildPrincipal() {
   lensGlass.position.set(0, T.camera.cy, recessFloor + 0.4);
   group.add(lensGlass); cabecaItems.push(lensGlass);
 
-  // C5 suporte da câmera (160×80) — prateleira fixa no C1 com rosca 1/4"
+  // C5 suporte da câmera (140 larg × 130 prof) — prateleira fixa no C1 com rosca 1/4"
+  const c5depth = 130, c5w = 140;
+  const c5frontZ = cabFront - 18 - 1;           // borda frontal encostada por dentro do C1
+  const c5cz = c5frontZ - c5depth / 2;          // centro em Z
   const c5 = piece(
-    new THREE.BoxGeometry(160, 15, 80),
+    new THREE.BoxGeometry(c5w, 15, c5depth),
     begeEdge, pcInfo('C5')
   );
-  c5.position.set(0, T.camera.cy - 52, 8);
+  c5.position.set(0, T.camera.cy - 52, c5cz);
   group.add(c5); cabecaItems.push(c5);
 
-  // Corpo da câmera (DSLR) apoiado no C5, atrás do furo — visível no raio-X
+  // Furo rosca 1/4": a 10 mm da borda frontal do C5 (câmera recuada 1 cm)
+  const roscaZ = c5frontZ - 10;
+
+  // Corpo da câmera (DSLR) apoiado no C5, recuado 10 mm da frente — visível no raio-X
+  const camDepth = 75;
   const camBody = piece(
-    new THREE.BoxGeometry(140, 100, 75),
+    new THREE.BoxGeometry(140, 100, camDepth),
     mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
-    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via parafuso 1/4" UNC no suporte C5' }
+    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via rosca 1/4" UNC no C5, recuada 10 mm da frente' }
   );
-  camBody.position.set(0, T.camera.cy + 5, 8);
+  camBody.position.set(0, T.camera.cy + 5, roscaZ - camDepth / 2);
   group.add(camBody); cabecaItems.push(camBody);
 
   // Barril da lente — liga o corpo DSLR ao vidro embutido, apontando para o furo ⌀68

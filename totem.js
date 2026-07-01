@@ -715,7 +715,7 @@ const PECAS_PRINCIPAL = [
   { cod: "H4", nome: "Haste inferior direita", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (reforço inferior)", desenha: dRetSimples },
   { cod: "H5", nome: "Haste superior (arco)", mat: "MDF 15 mm", esp: 15, l: 90, a: 40, qtd: 1, obs: "Espaçador C1 → CE (topo do arco stadium)", desenha: dRetSimples },
   { cod: "C4", nome: "Suporte monitor", mat: "MDF 15 mm", esp: 15, l: 240, a: 20, qtd: 2, obs: "Barras horizontais no C1 (1 acima + 1 abaixo da moldura do monitor)", desenha: dRetSimples },
-  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 160, a: 80, qtd: 1, obs: "Fixo no C1. Furo central rosca 1/4\" para a Canon EOS Rebel T7 (câmera acompanha o C1 fixo)", desenha: dSuporteCamera },
+  { cod: "C5", nome: "Suporte câmera", mat: "MDF 15 mm", esp: 15, l: 140, a: 130, qtd: 1, obs: "Fixo no C1 (140 largura × 130 profundidade). Furo rosca 1/4\" a 10 mm da borda frontal (câmera recuada 1 cm) para a Canon EOS Rebel T7", desenha: dSuporteCamera },
   { cod: "G1", nome: "Encaixe coluna ↔ base (interno)", mat: "MDF 18 mm", esp: 18, l: 140, a: 150, qtd: 1, obs: "Quadro interno escondido na base. Centra a coluna no soquete 120×130. 4× parafuso-conector M6 + insertos", desenha: dFlangeUniao },
   { cod: "G2", nome: "Base de fixação reta da cabeça (interna)", mat: "MDF 18 mm", esp: 18, l: 130, a: 130, qtd: 1, obs: "BASE RETA por DENTRO da cabeça, sobre o topo da coluna. A cabeça conecta DIRETO na coluna (sem placa de transição aparente): furo passa-cabo ⌀30 + 3–4 parafusos M6 REMOVÍVEIS", desenha: dFlangeCabo }
 ];
@@ -970,11 +970,31 @@ function dCabecaTraseira(g, p, esc) {
 
 function dSuporteCamera(g, p, esc) {
   g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, class: "estrutura" }));
-  // furo central 1/4"
-  g.appendChild(el("circle", { cx: p.l * esc / 2, cy: p.a * esc / 2, r: 4 * esc, class: "componente" }));
-  const t = el("text", { x: p.l * esc / 2, y: p.a * esc / 2 + 14, "text-anchor": "middle", class: "label-small" });
+
+  // Furo rosca 1/4": centrado na largura (140), a 10 mm da BORDA FRONTAL (topo = lado do C1).
+  // A câmera fica recuada 1 cm para dentro dos 130 mm de profundidade.
+  const furoRec = 10;                       // mm da borda frontal
+  const fx = p.l / 2;                        // centro na largura
+  const fy = furoRec;                        // 10 mm do topo (frente)
+  g.appendChild(el("circle", { cx: fx * esc, cy: fy * esc, r: 4 * esc, class: "componente" }));
+  const t = el("text", { x: fx * esc, y: (fy + 12) * esc, "text-anchor": "middle", class: "label-small" });
   t.textContent = "rosca 1/4\"";
   g.appendChild(t);
+
+  // Marca "frente (C1)" na borda superior
+  const tf = el("text", { x: fx * esc, y: -4 * esc, "text-anchor": "middle", class: "cota-texto" });
+  tf.textContent = "frente (C1)";
+  g.appendChild(tf);
+
+  // Cota da recuo do furo: 10 mm da borda frontal
+  const cotaX = p.l - 22;
+  g.appendChild(el("line", {
+    x1: cotaX * esc, y1: 0, x2: cotaX * esc, y2: fy * esc,
+    class: "cota-linha", "marker-start": "url(#arrow)", "marker-end": "url(#arrow)"
+  }));
+  const tc = el("text", { x: (cotaX + 10) * esc, y: (fy / 2 + 3) * esc, "text-anchor": "start", class: "cota-texto" });
+  tc.textContent = "10";
+  g.appendChild(tc);
 }
 
 function dCaixaFrontal(g, p, esc) {
