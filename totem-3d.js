@@ -547,7 +547,7 @@ function buildPrincipal() {
   // Referência fixa: TELA recuada 10 mm da borda de FUNDO do C5. O soquete do
   // tripé fica sob a lente, a ~52 mm da face da tela (MEDIR na câmera real).
   const c5backZ = c5frontZ - c5depth;         // borda de fundo do C5
-  const telaRecuo = 10;                       // tela recuada da borda de fundo
+  const telaRecuo = 30;                       // tela recuada 30 mm do fundo (câmera toda dentro)
   const roscaTela = 52;                       // soquete a ~52 mm da face da tela — VERIFICAR
   const telaZ = c5backZ + telaRecuo;          // face da tela (traseira do corpo)
   const roscaZ = telaZ + roscaTela;           // centro da rosca 1/4" no C5
@@ -557,7 +557,7 @@ function buildPrincipal() {
   const camBody = piece(
     new THREE.BoxGeometry(140, 100, camDepth),
     mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
-    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Tela recuada 10 mm do fundo; rosca 1/4" ~62 mm da borda de fundo do C5' }
+    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Tela recuada 30 mm do fundo; rosca 1/4" ~82 mm da borda de fundo do C5' }
   );
   camBody.position.set(0, T.camera.cy + 5, telaZ + camDepth / 2);
   group.add(camBody); cabecaItems.push(camBody);
@@ -566,7 +566,7 @@ function buildPrincipal() {
   const rosca = piece(
     new THREE.CylinderGeometry(3, 3, 8, 16),
     mat(0x777777, { roughness: 0.4, metalness: 0.7 }),
-    { cod: 'C5', nome: 'Rosca 1/4" (soquete tripé)', obs: 'Furo a ~62 mm da borda de fundo do C5 (10 mm tela + 52 mm soquete)' }
+    { cod: 'C5', nome: 'Rosca 1/4" (soquete tripé)', obs: 'Furo a ~82 mm da borda de fundo do C5 (30 mm tela + 52 mm soquete)' }
   );
   rosca.position.set(0, T.camera.cy - 52 + 7.5, roscaZ);
   group.add(rosca); cabecaItems.push(rosca);
