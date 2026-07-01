@@ -543,18 +543,31 @@ function buildPrincipal() {
   c5.position.set(0, T.camera.cy - 52, c5cz);
   group.add(c5); cabecaItems.push(c5);
 
-  // Furo rosca 1/4": a 10 mm da borda frontal do C5 (câmera recuada 1 cm)
-  const roscaZ = c5frontZ - 10;
+  // Câmera recuada 10 mm da frente do C5; o soquete do tripé fica ~25 mm
+  // atrás da face frontal do corpo (MEDIR na câmera real). Furo = 10 + 25 = 35 mm.
+  const camRecuo = 10;                        // frente do corpo recuada da borda frontal
+  const roscaCorpo = 25;                      // soquete atrás da face do corpo — VERIFICAR
+  const camFrontZ = c5frontZ - camRecuo;      // face frontal do corpo da câmera
+  const roscaZ = camFrontZ - roscaCorpo;      // centro da rosca 1/4" no C5
 
-  // Corpo da câmera (DSLR) apoiado no C5, recuado 10 mm da frente — visível no raio-X
+  // Corpo da câmera (DSLR) apoiado no C5, frente recuada 10 mm — visível no raio-X
   const camDepth = 75;
   const camBody = piece(
     new THREE.BoxGeometry(140, 100, camDepth),
     mat(0x1c1c1f, { roughness: 0.5, metalness: 0.25 }),
-    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Fixada via rosca 1/4" UNC no C5, recuada 10 mm da frente' }
+    { cod: 'CAM', nome: 'Corpo Canon EOS Rebel T7', mat: 'DSLR APS-C', l: 140, a: 100, obs: 'Frente recuada 10 mm; rosca 1/4" ~35 mm da borda frontal do C5' }
   );
-  camBody.position.set(0, T.camera.cy + 5, roscaZ - camDepth / 2);
+  camBody.position.set(0, T.camera.cy + 5, camFrontZ - camDepth / 2);
   group.add(camBody); cabecaItems.push(camBody);
+
+  // Marcador da rosca 1/4" no topo do C5 (posição do soquete do tripé)
+  const rosca = piece(
+    new THREE.CylinderGeometry(3, 3, 8, 16),
+    mat(0x777777, { roughness: 0.4, metalness: 0.7 }),
+    { cod: 'C5', nome: 'Rosca 1/4" (soquete tripé)', obs: 'Furo a ~35 mm da borda frontal do C5' }
+  );
+  rosca.position.set(0, T.camera.cy - 52 + 7.5, roscaZ);
+  group.add(rosca); cabecaItems.push(rosca);
 
   // Barril da lente — liga o corpo DSLR ao vidro embutido, apontando para o furo ⌀68
   const lente = piece(

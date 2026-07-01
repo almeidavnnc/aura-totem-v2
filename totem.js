@@ -971,11 +971,14 @@ function dCabecaTraseira(g, p, esc) {
 function dSuporteCamera(g, p, esc) {
   g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, class: "estrutura" }));
 
-  // Furo rosca 1/4": centrado na largura (140), a 10 mm da BORDA FRONTAL (topo = lado do C1).
-  // A câmera fica recuada 1 cm para dentro dos 130 mm de profundidade.
-  const furoRec = 10;                       // mm da borda frontal
+  // Furo rosca 1/4": centrado na largura (140). Em profundidade NÃO é 10 mm:
+  // a CÂMERA recua 10 mm da borda frontal, e o soquete do tripé fica mais
+  // atrás, sob o corpo. Furo = recuo da câmera + distância corpo→soquete.
+  const camRecuo = 10;                       // câmera recuada 10 mm da frente
+  const roscaCorpo = 25;                      // soquete ~25 mm atrás da face do corpo — MEDIR na câmera real
+  const furoRec = camRecuo + roscaCorpo;     // = 35 mm da borda frontal
   const fx = p.l / 2;                        // centro na largura
-  const fy = furoRec;                        // 10 mm do topo (frente)
+  const fy = furoRec;                        // do topo (frente)
   g.appendChild(el("circle", { cx: fx * esc, cy: fy * esc, r: 4 * esc, class: "componente" }));
   const t = el("text", { x: fx * esc, y: (fy + 12) * esc, "text-anchor": "middle", class: "label-small" });
   t.textContent = "rosca 1/4\"";
@@ -986,14 +989,14 @@ function dSuporteCamera(g, p, esc) {
   tf.textContent = "frente (C1)";
   g.appendChild(tf);
 
-  // Cota da recuo do furo: 10 mm da borda frontal
+  // Cota do recuo do furo: da borda frontal até o centro da rosca
   const cotaX = p.l - 22;
   g.appendChild(el("line", {
     x1: cotaX * esc, y1: 0, x2: cotaX * esc, y2: fy * esc,
     class: "cota-linha", "marker-start": "url(#arrow)", "marker-end": "url(#arrow)"
   }));
   const tc = el("text", { x: (cotaX + 10) * esc, y: (fy / 2 + 3) * esc, "text-anchor": "start", class: "cota-texto" });
-  tc.textContent = "10";
+  tc.textContent = String(furoRec);
   g.appendChild(tc);
 }
 
