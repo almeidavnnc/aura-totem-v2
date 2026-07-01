@@ -971,32 +971,37 @@ function dCabecaTraseira(g, p, esc) {
 function dSuporteCamera(g, p, esc) {
   g.appendChild(el("rect", { x: 0, y: 0, width: p.l * esc, height: p.a * esc, class: "estrutura" }));
 
-  // Furo rosca 1/4": centrado na largura (140). Em profundidade NÃO é 10 mm:
-  // a CÂMERA recua 10 mm da borda frontal, e o soquete do tripé fica mais
-  // atrás, sob o corpo. Furo = recuo da câmera + distância corpo→soquete.
-  const camRecuo = 10;                       // câmera recuada 10 mm da frente
-  const roscaCorpo = 25;                      // soquete ~25 mm atrás da face do corpo — MEDIR na câmera real
-  const furoRec = camRecuo + roscaCorpo;     // = 35 mm da borda frontal
-  const fx = p.l / 2;                        // centro na largura
-  const fy = furoRec;                        // do topo (frente)
+  // Orientação: a LENTE aponta para o C1 (topo do desenho = frente do totem);
+  // a TELA fica no lado oposto (fundo = borda de baixo, lado da porta C2).
+  // Referência fixa: a TELA recua 10 mm da borda de FUNDO. O soquete do tripé
+  // fica sob a lente, a ~52 mm da face da tela → é aí que vai o furo 1/4".
+  const telaRecuo = 10;                       // tela a 10 mm da borda de FUNDO
+  const roscaTela = 52;                       // soquete a ~52 mm da face da tela — MEDIR na câmera real
+  const furoFundo = telaRecuo + roscaTela;    // = 62 mm da borda de fundo
+  const furoRec = p.a - furoFundo;            // = 68 mm da borda frontal (topo)
+  const fx = p.l / 2;                         // centro na largura
+  const fy = furoRec;
   g.appendChild(el("circle", { cx: fx * esc, cy: fy * esc, r: 4 * esc, class: "componente" }));
   const t = el("text", { x: fx * esc, y: (fy + 12) * esc, "text-anchor": "middle", class: "label-small" });
   t.textContent = "rosca 1/4\"";
   g.appendChild(t);
 
-  // Marca "frente (C1)" na borda superior
+  // Marcas de orientação
   const tf = el("text", { x: fx * esc, y: -4 * esc, "text-anchor": "middle", class: "cota-texto" });
-  tf.textContent = "frente (C1)";
+  tf.textContent = "frente / lente (C1)";
   g.appendChild(tf);
+  const tb = el("text", { x: fx * esc, y: (p.a + 12) * esc, "text-anchor": "middle", class: "cota-texto" });
+  tb.textContent = "fundo / tela (C2)";
+  g.appendChild(tb);
 
-  // Cota do recuo do furo: da borda frontal até o centro da rosca
+  // Cota do furo: da borda de FUNDO (referência da tela) até o centro da rosca
   const cotaX = p.l - 22;
   g.appendChild(el("line", {
-    x1: cotaX * esc, y1: 0, x2: cotaX * esc, y2: fy * esc,
+    x1: cotaX * esc, y1: fy * esc, x2: cotaX * esc, y2: p.a * esc,
     class: "cota-linha", "marker-start": "url(#arrow)", "marker-end": "url(#arrow)"
   }));
-  const tc = el("text", { x: (cotaX + 10) * esc, y: (fy / 2 + 3) * esc, "text-anchor": "start", class: "cota-texto" });
-  tc.textContent = String(furoRec);
+  const tc = el("text", { x: (cotaX + 10) * esc, y: ((fy + p.a) / 2 + 3) * esc, "text-anchor": "start", class: "cota-texto" });
+  tc.textContent = String(furoFundo);
   g.appendChild(tc);
 }
 
